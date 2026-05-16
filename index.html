@@ -70,23 +70,6 @@
 </head>
 <body class="gradient-bg min-h-screen text-gray-200" style="font-family:'Segoe UI',system-ui,sans-serif">
 
-  <!-- ======================== SCREEN: FIREBASE CONFIG ======================== -->
-  <div id="screen-config" class="min-h-screen flex items-center justify-center px-4 hidden">
-    <div class="bg-euro-card rounded-2xl p-8 max-w-md w-full card-glow slide-up text-center">
-      <div class="text-5xl mb-3">⚙️</div>
-      <h2 class="text-xl font-bold euro-gradient-text mb-1">Configuration Firebase</h2>
-      <p class="text-gray-400 text-sm mb-6">Nécessaire pour la synchronisation temps réel entre joueurs.</p>
-      <div class="space-y-3 text-left">
-        <input id="cfg-apiKey" type="text" placeholder="API Key (AIzaSy...)" class="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2.5 text-sm text-gray-200 focus:outline-none focus:border-euro-purple placeholder-gray-500">
-        <input id="cfg-projectId" type="text" placeholder="Project ID" class="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2.5 text-sm text-gray-200 focus:outline-none focus:border-euro-purple placeholder-gray-500">
-        <input id="cfg-databaseURL" type="text" placeholder="Database URL (https://...firebasedatabase.app)" class="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2.5 text-sm text-gray-200 focus:outline-none focus:border-euro-purple placeholder-gray-500">
-      </div>
-      <button onclick="connectFirebase()" class="mt-6 w-full py-3 rounded-xl font-bold text-white euro-gradient hover:opacity-90 transition-all shadow-lg">
-        Connecter 🚀
-      </button>
-    </div>
-  </div>
-
   <!-- ======================== SCREEN: LOGIN ======================== -->
   <div id="screen-login" class="min-h-screen flex items-center justify-center px-4 hidden">
     <div class="bg-euro-card rounded-2xl p-8 max-w-sm w-full card-glow slide-up text-center">
@@ -94,7 +77,9 @@
       <h1 class="text-3xl font-extrabold euro-gradient-text mb-1">MPP</h1>
       <p class="text-gray-400 text-sm mb-6">Mon Petit Prono — Eurovision 2026</p>
       <input id="login-name" type="text" maxlength="20" placeholder="Ton prénom..."
-        class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-center text-lg text-gray-200 focus:outline-none focus:border-euro-purple placeholder-gray-500"
+        class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-center text-lg text-gray-200 focus:outline-none focus:border-euro-purple placeholder-gray-500">
+      <input id="login-password" type="password" maxlength="30" placeholder="Mot de passe..."
+        class="mt-3 w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-center text-lg text-gray-200 focus:outline-none focus:border-euro-purple placeholder-gray-500"
         onkeydown="if(event.key==='Enter')login()">
       <button onclick="login()" class="mt-4 w-full py-3 rounded-xl font-bold text-white euro-gradient hover:opacity-90 transition-all shadow-lg text-lg">
         C'est parti ! →
@@ -206,14 +191,36 @@
             💾 Publier les résultats
           </button>
         </div>
+        <!-- Vote lock -->
+        <div class="mt-6">
+          <button onclick="toggleVoteLock()" id="btn-vote-lock" class="w-full py-3 rounded-xl text-sm font-bold bg-red-500/15 text-red-400 hover:bg-red-500/25 transition-all shadow-lg">
+            🔒 Bloquer les votes
+          </button>
+        </div>
         <!-- Players overview -->
-        <div class="mt-8">
+        <div class="mt-6">
           <h3 class="text-sm font-semibold text-gray-400 mb-3">👥 Joueurs inscrits</h3>
           <div id="admin-players" class="space-y-2"></div>
         </div>
       </section>
 
     </main>
+  </div>
+
+  <!-- Admin modal -->
+  <div id="admin-modal" class="hidden fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm px-4">
+    <div class="bg-euro-card rounded-2xl p-6 max-w-xs w-full card-glow slide-up text-center">
+      <div class="text-4xl mb-2">🔐</div>
+      <h3 class="text-lg font-bold euro-gradient-text mb-1">Accès Admin</h3>
+      <p class="text-gray-400 text-xs mb-4">Mot de passe requis pour gérer les résultats.</p>
+      <input id="admin-pwd-input" type="password" placeholder="Mot de passe admin..."
+        class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-center text-sm text-gray-200 focus:outline-none focus:border-euro-purple placeholder-gray-500"
+        onkeydown="if(event.key==='Enter')checkAdminPwd()">
+      <div class="mt-4 flex gap-2">
+        <button onclick="closeAdminModal()" class="flex-1 py-2.5 rounded-xl text-sm font-medium bg-white/5 text-gray-400 hover:bg-white/10 transition-all">Annuler</button>
+        <button onclick="checkAdminPwd()" class="flex-1 py-2.5 rounded-xl text-sm font-bold text-white euro-gradient hover:opacity-90 transition-all">Valider</button>
+      </div>
+    </div>
   </div>
 
   <!-- Toast -->
@@ -246,8 +253,22 @@
   const MEDAL = ["🥇","🥈","🥉"];
   const P_COLORS = ["#ec4899","#8b5cf6","#3b82f6","#10b981","#f59e0b","#ef4444","#06b6d4","#f97316","#14b8a6","#a855f7"];
 
-  const FB_KEY = "mpp_firebase_config";
+  // =====================================================================
+  //  FIREBASE CONFIG — À remplir avec vos valeurs Firebase
+  // =====================================================================
+  const FIREBASE_CONFIG = {
+    apiKey: "AIzaSyATE6I2oPBQB5-3KL79LwJmUhueUt1yCDQ",
+    authDomain: "eurovision-2026-a114f.firebaseapp.com",
+    databaseURL: "https://eurovision-2026-a114f-default-rtdb.europe-west1.firebasedatabase.app",
+    projectId: "eurovision-2026-a114f",
+    storageBucket: "eurovision-2026-a114f.firebasestorage.app",
+    messagingSenderId: "509153122595",
+    appId: "1:509153122595:web:139555f706aa06e02bd496"
+  };
+  const ADMIN_PASSWORD = "Graine2621*";
+
   const USER_KEY = "mpp_username";
+  const PWD_KEY = "mpp_pwdhash";
 
   // =====================================================================
   //  STATE
@@ -258,32 +279,34 @@
   let allPlayers = {};
   let realResults = [];
   let isConnected = false;
+  let votesLocked = false;
+  let adminAuthed = false;
+
+  // =====================================================================
+  //  CRYPTO
+  // =====================================================================
+  async function hashPassword(pwd) {
+    const data = new TextEncoder().encode(pwd);
+    const buf = await crypto.subtle.digest('SHA-256', data);
+    return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2,'0')).join('');
+  }
 
   // =====================================================================
   //  FIREBASE
   // =====================================================================
-  function connectFirebase() {
-    const apiKey = document.getElementById("cfg-apiKey").value.trim();
-    const projectId = document.getElementById("cfg-projectId").value.trim();
-    const databaseURL = document.getElementById("cfg-databaseURL").value.trim();
-    if (!apiKey || !projectId || !databaseURL) { toast("Remplis tous les champs","error"); return; }
-    const config = { apiKey, projectId, databaseURL };
-    if (initFB(config)) {
-      try { localStorage.setItem(FB_KEY, JSON.stringify(config)); } catch(e){}
-      show("screen-login");
-    }
-  }
-
-  function initFB(config) {
-    try { if (firebase.apps.length) firebase.app().delete().catch(()=>{}); } catch(e){}
+  function initFB() {
     try {
-      firebase.initializeApp(config);
+      firebase.initializeApp(FIREBASE_CONFIG);
       db = firebase.database();
       db.ref(".info/connected").on("value", s => { isConnected = s.val()===true; syncUI(); });
       db.ref("players").on("value", snap => { allPlayers = snap.val()||{}; onData(); });
       db.ref("realResults").on("value", snap => {
         const v = snap.val();
         realResults = (v && Array.isArray(v)) ? v : [];
+        onData();
+      });
+      db.ref("votesLocked").on("value", snap => {
+        votesLocked = snap.val() === true;
         onData();
       });
       return true;
@@ -303,31 +326,22 @@
   //  SCREENS
   // =====================================================================
   function show(id) {
-    ["screen-config","screen-login","screen-app"].forEach(s =>
+    ["screen-login","screen-app"].forEach(s =>
       document.getElementById(s).classList.toggle("hidden", s !== id)
     );
   }
 
   function boot() {
-    let cfg = null;
-    try { cfg = JSON.parse(localStorage.getItem(FB_KEY)); } catch(e){}
-    if (cfg && cfg.apiKey) {
-      if (initFB(cfg)) {
-        const saved = localStorage.getItem(USER_KEY);
-        if (saved) {
-          displayName = saved;
-          currentUser = toKey(saved);
-          show("screen-app");
-          document.getElementById("app-username").textContent = displayName;
-          navigate("prono");
-        } else {
-          show("screen-login");
-        }
-      } else {
-        show("screen-config");
-      }
+    if (!initFB()) { show("screen-login"); return; }
+    const saved = localStorage.getItem(USER_KEY);
+    if (saved) {
+      displayName = saved;
+      currentUser = toKey(saved);
+      show("screen-app");
+      document.getElementById("app-username").textContent = displayName;
+      navigate("prono");
     } else {
-      show("screen-config");
+      show("screen-login");
     }
   }
 
@@ -342,23 +356,38 @@
       .replace(/^_|_$/g,"");
   }
 
-  function login() {
+  async function login() {
+    if (!db) { toast("Connexion en cours...","error"); return; }
     const raw = document.getElementById("login-name").value.trim();
+    const pwd = document.getElementById("login-password").value;
     if (!raw || raw.length < 2) { toast("Entre ton prénom (min 2 lettres)","error"); return; }
-    displayName = raw.charAt(0).toUpperCase() + raw.slice(1);
-    currentUser = toKey(raw);
-    if (!currentUser) { toast("Prénom invalide","error"); return; }
-    try { localStorage.setItem(USER_KEY, displayName); } catch(e){}
+    if (!pwd || pwd.length < 3) { toast("Mot de passe requis (min 3 car.)","error"); return; }
+    const name = raw.charAt(0).toUpperCase() + raw.slice(1);
+    const key = toKey(raw);
+    if (!key) { toast("Prénom invalide","error"); return; }
 
-    // Create player entry if new
-    if (!allPlayers[currentUser]) {
-      db.ref(`players/${currentUser}`).set({
-        name: displayName,
+    const hash = await hashPassword(pwd);
+    const existing = allPlayers[key];
+    if (existing) {
+      if (existing.passwordHash && existing.passwordHash !== hash) {
+        toast("Mot de passe incorrect !","error");
+        return;
+      }
+      if (!existing.passwordHash) {
+        db.ref(`players/${key}/passwordHash`).set(hash);
+      }
+    } else {
+      db.ref(`players/${key}`).set({
+        name: name,
         predictions: Array(10).fill(""),
-        locked: false
+        locked: false,
+        passwordHash: hash
       });
     }
 
+    displayName = name;
+    currentUser = key;
+    try { localStorage.setItem(USER_KEY, displayName); localStorage.setItem(PWD_KEY, hash); } catch(e){}
     document.getElementById("app-username").textContent = displayName;
     show("screen-app");
     navigate("prono");
@@ -366,10 +395,11 @@
   }
 
   function logout() {
-    try { localStorage.removeItem(USER_KEY); } catch(e){}
-    currentUser = null; displayName = "";
+    try { localStorage.removeItem(USER_KEY); localStorage.removeItem(PWD_KEY); } catch(e){}
+    currentUser = null; displayName = ""; adminAuthed = false;
     show("screen-login");
     document.getElementById("login-name").value = "";
+    document.getElementById("login-password").value = "";
   }
 
   // =====================================================================
@@ -377,6 +407,7 @@
   // =====================================================================
   let currentTab = "prono";
   function navigate(tab) {
+    if (tab === "admin" && !adminAuthed) { showAdminModal(); return; }
     currentTab = tab;
     ["prono","classement","admin"].forEach(t => {
       document.getElementById(`tab-${t}`).classList.toggle("hidden", t !== tab);
@@ -385,13 +416,27 @@
     render();
   }
 
+  function showAdminModal() {
+    document.getElementById("admin-modal").classList.remove("hidden");
+    document.getElementById("admin-pwd-input").value = "";
+    setTimeout(() => document.getElementById("admin-pwd-input").focus(), 100);
+  }
+  function checkAdminPwd() {
+    if (document.getElementById("admin-pwd-input").value === ADMIN_PASSWORD) {
+      adminAuthed = true;
+      document.getElementById("admin-modal").classList.add("hidden");
+      navigate("admin");
+    } else { toast("Mot de passe incorrect","error"); }
+  }
+  function closeAdminModal() { document.getElementById("admin-modal").classList.add("hidden"); }
+
   function onData() { render(); }
 
   function render() {
     if (!currentUser) return;
     if (currentTab === "prono") renderProno();
     if (currentTab === "classement") renderClassement();
-    if (currentTab === "admin") { renderAdmin(); renderAdminPlayers(); }
+    if (currentTab === "admin") { renderAdmin(); renderAdminPlayers(); updateVoteLockBtn(); }
   }
 
   // =====================================================================
@@ -404,11 +449,17 @@
   function renderProno() {
     const data = getMyData();
     const preds = data.predictions || Array(10).fill("");
-    const locked = !!data.locked;
+    const locked = !!data.locked || votesLocked;
     const filled = preds.filter(c => c).length;
 
     document.getElementById("prono-status").textContent = locked ? "Verrouillé 🔒" : `${filled}/10`;
-    document.getElementById("prono-locked-banner").classList.toggle("hidden", !locked);
+    const banner = document.getElementById("prono-locked-banner");
+    banner.classList.toggle("hidden", !locked);
+    if (locked) {
+      banner.innerHTML = votesLocked && !data.locked
+        ? '🔒 Les votes sont fermés — bonne chance !'
+        : '✅ Tes pronos sont verrouillés — bonne chance !';
+    }
     document.getElementById("btn-lock").classList.toggle("hidden", locked);
     document.getElementById("btn-clear").classList.toggle("hidden", locked);
 
@@ -461,7 +512,7 @@
   }
 
   function clearMyPronos() {
-    if (getMyData().locked) return;
+    if (getMyData().locked || votesLocked) return;
     db.ref(`players/${currentUser}/predictions`).set(Array(10).fill(""));
     toast("Pronos effacés","info");
   }
@@ -473,6 +524,7 @@
     db.ref(`players/${currentUser}/locked`).set(true);
     toast("Pronos verrouillés ! 🔒 Bonne chance !");
     confetti();
+    setTimeout(() => navigate("classement"), 1000);
   }
 
   // =====================================================================
@@ -713,6 +765,23 @@
     db.ref("realResults").set(realResults);
     toast("Résultats publiés ! 🎉");
     confetti();
+  }
+
+  function toggleVoteLock() {
+    db.ref("votesLocked").set(!votesLocked);
+    toast(votesLocked ? "Votes débloqués ✏️" : "Votes bloqués ! 🔒");
+  }
+
+  function updateVoteLockBtn() {
+    const btn = document.getElementById("btn-vote-lock");
+    if (!btn) return;
+    if (votesLocked) {
+      btn.textContent = "🔓 Débloquer les votes";
+      btn.className = "w-full py-3 rounded-xl text-sm font-bold bg-amber-500/20 text-amber-400 hover:bg-amber-500/30 transition-all shadow-lg";
+    } else {
+      btn.textContent = "🔒 Bloquer les votes";
+      btn.className = "w-full py-3 rounded-xl text-sm font-bold bg-red-500/15 text-red-400 hover:bg-red-500/25 transition-all shadow-lg";
+    }
   }
 
   function renderAdminPlayers() {
