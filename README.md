@@ -25,6 +25,7 @@
 ## Fonctionnalités
 
 - **Pronostics personnels** — Chaque joueur compose son Top 10 parmi les 25 pays finalistes
+- **Réorganisation intuitive** — Drag & drop (souris et tactile), boutons ▲▼, et échange automatique pour réordonner facilement le classement
 - **Sélection de joueur** — Chaque joueur choisit son prénom dans la liste existante ou en ajoute un nouveau
 - **Verrouillage des pronos** — Possibilité de verrouiller ses choix avant le début du show
 - **Déverrouillage autorisé** — L'administrateur peut autoriser les joueurs à modifier leurs pronos même après verrouillage
@@ -125,9 +126,10 @@ La configuration Firebase est intégrée directement dans le code (`index.html`)
 
 1. **Connexion** — Choisir son prénom dans la liste ou en ajouter un nouveau
 2. **Mes Pronos** — Sélectionner un pays pour chaque position du Top 10 (1er = 12 pts, 2e = 10 pts, etc.)
-3. **Verrouiller** — Cliquer sur "Valider mes pronos" une fois le Top 10 complet
-4. **Modifier** — Si l'admin a autorisé le déverrouillage, un bouton "🔓 Modifier mes pronos" permet de changer ses choix
-5. **Classement** — Redirigé automatiquement après verrouillage, suivre le classement en temps réel
+3. **Réorganiser** — Glisser-déposer les lignes, utiliser les boutons ▲▼, ou choisir un pays déjà placé pour un échange automatique
+4. **Verrouiller** — Cliquer sur "Valider mes pronos" une fois le Top 10 complet
+5. **Modifier** — Si l'admin a autorisé le déverrouillage, un bouton "🔓 Modifier mes pronos" permet de changer ses choix
+6. **Classement** — Redirigé automatiquement après verrouillage, suivre le classement en temps réel
 
 ### Administrateur
 

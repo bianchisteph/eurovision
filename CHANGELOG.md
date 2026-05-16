@@ -5,6 +5,25 @@ Toutes les modifications notables de ce projet sont documentées dans ce fichier
 Le format est basé sur [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/),
 et ce projet adhère au [Semantic Versioning](https://semver.org/lang/fr/).
 
+## [1.5.0] — 2026-05-16
+
+### Ajouté
+
+- **Drag & drop** — Réorganisation des pronos par glisser-déposer (souris + tactile sur mobile)
+- **Boutons ▲▼** — Flèches de déplacement rapide sur chaque ligne pour monter/descendre un pays
+- **Échange automatique** — Choisir un pays déjà assigné à une autre position provoque un swap intelligent au lieu de bloquer
+- **Insertion par décalage** — Le déplacement (drag ou boutons) insère le pays à la position cible et décale les autres vers le bas
+- Fonction `moveProno(fromIdx, toIdx)` pour gérer le déplacement avec splice
+- Variable d'état `dragSrcIdx` pour le suivi du drag en cours
+- Styles CSS `.prono-row`, `.move-btn`, `.drag-over` pour le feedback visuel du drag & drop
+- Hint UX sous le titre ("💡 Glisse les lignes ou utilise ▲▼ pour réordonner")
+
+### Modifié
+
+- Les sélecteurs de pays affichent désormais **tous les pays** (plus de filtrage des pays déjà utilisés) — les conflits sont résolus par échange automatique
+- Les boutons ▲▼ et le drag & drop sont désactivés quand les pronos sont verrouillés
+- Le hint UX est masqué quand les pronos sont verrouillés
+
 ## [1.4.1] — 2026-05-16
 
 ### Corrigé
@@ -108,6 +127,8 @@ et ce projet adhère au [Semantic Versioning](https://semver.org/lang/fr/).
 - Fonction d'échappement HTML (`esc()`) pour la sécurité XSS
 - Système de toasts pour les notifications
 
+[1.5.0]: https://github.com/bianchisteph/eurovision/compare/v1.4.1...v1.5.0
+[1.4.1]: https://github.com/bianchisteph/eurovision/compare/v1.4.0...v1.4.1
 [1.4.0]: https://github.com/bianchisteph/eurovision/compare/v1.3.0...v1.4.0
 [1.3.0]: https://github.com/bianchisteph/eurovision/compare/v1.2.0...v1.3.0
 [1.2.0]: https://github.com/bianchisteph/eurovision/compare/v1.1.0...v1.2.0

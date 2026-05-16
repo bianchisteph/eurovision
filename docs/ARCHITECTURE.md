@@ -58,7 +58,7 @@ L'écran principal contient 3 onglets, gérés par la fonction `navigate()` :
 
 | Onglet | ID | Description |
 |---|---|---|
-| Mes Pronos | `tab-prono` | Sélection du Top 10 personnel |
+| Mes Pronos | `tab-prono` | Sélection et réorganisation du Top 10 personnel (drag & drop, boutons ▲▼, échange auto) |
 | Classement | `tab-classement` | Podium et tableau des scores |
 | Résultats | `tab-admin` | Saisie des résultats officiels |
 
@@ -202,6 +202,7 @@ L'état de l'application est géré par des variables globales :
 | `allowUnlock` | `boolean` | Autorisation de déverrouillage des pronos (admin) |
 | `adminAuthed` | `boolean` | Accès admin déverrouillé pour la session |
 | `autoFetchInterval` | `number\|null` | ID de l'intervalle d'auto-refresh des résultats (`null` si inactif) |
+| `dragSrcIdx` | `number\|null` | Index de la ligne source lors d'un drag & drop (`null` si aucun drag en cours) |
 | `currentTab` | `string` | Onglet actif (`prono`, `classement`, `admin`) |
 
 ## Sécurité
@@ -281,6 +282,28 @@ fetchLiveResults()
 ### Proxy CORS
 
 Le scraping passe par `api.allorigins.win` pour contourner les restrictions CORS du navigateur. Ce service est public et gratuit.
+
+## Interactions de réorganisation des pronos
+
+L'onglet "Mes Pronos" offre 3 modes de réorganisation du classement :
+
+### Drag & drop
+
+- Supporte souris (`dragstart`/`dragover`/`drop`) et tactile (`touchstart`/`touchmove`/`touchend`)
+- Feedback visuel : la ligne source devient semi-transparente (`.dragging`), la cible affiche une bordure violette (`.drag-over`)
+- Le drop effectue un `splice` : retire l'élément de sa position et l'insère à la cible, décalant les autres
+
+### Boutons ▲▼
+
+- Présents sur chaque ligne quand les pronos ne sont pas verrouillés
+- Déplacent le pays d'une position vers le haut ou le bas (même logique `moveProno` avec splice)
+- Désactivés aux extrémités (▲ désactivé pour le 1er, ▼ désactivé pour le 10e)
+
+### Échange automatique (swap)
+
+- Quand un pays déjà assigné est sélectionné dans un autre slot, les deux positions sont échangées
+- Tous les pays sont affichés dans les listes déroulantes (plus de filtrage)
+- Exemple : France en 1er, on choisit France en 5e → la France passe en 5e et l'ancien pays du 5e passe en 1er
 
 ## Limitations connues
 
