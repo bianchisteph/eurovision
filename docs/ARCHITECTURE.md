@@ -30,8 +30,7 @@ MPP est une **Single Page Application (SPA)** entièrement contenue dans un fich
    │                 │  /players/{uid}          │
    │                 │    ├─ name               │
    │                 │    ├─ predictions[10]    │
-   │                 │    ├─ locked             │
-   │                 │    └─ passwordHash       │
+   │                 │    └─ locked             │
    │                 │                          │
    │                 │  /realResults[10]        │
    │                 │  /votesLocked             │
@@ -168,7 +167,7 @@ $$S_{max} = 2 \times (12 + 10 + 8 + 7 + 6 + 5 + 4 + 3 + 2 + 1) = 2 \times 58 = 1
 
 ### Listeners Firebase
 
-L'application utilise 4 listeners Firebase `.on("value")` :
+L'application utilise 5 listeners Firebase `.on("value")` :
 
 1. **`.info/connected`** — Détecte l'état de la connexion et met à jour l'indicateur visuel (dot vert/rouge)
 2. **`players`** — Écoute tous les changements sur les joueurs → déclenche `onData()` → `render()`
@@ -223,7 +222,7 @@ Cette approche est sûre car elle utilise le mécanisme natif du navigateur pour
 
 ### Identification
 
-L'identification est basée sur le prénom + mot de passe. Le mot de passe est hashé côté client (SHA-256 via `crypto.subtle`) avant stockage dans Firebase. La clé joueur est dérivée du prénom via normalisation. Deux prénoms identiques (accents/casse ignorés) partagent le même compte (avec vérification du mot de passe).
+L'identification est basée sur la sélection du prénom dans une liste déroulante. Aucun mot de passe joueur n'est requis. La clé joueur est dérivée du prénom via normalisation (`toKey()`). Deux prénoms identiques (accents/casse ignorés) partagent le même compte.
 
 ### Administration
 

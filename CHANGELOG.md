@@ -5,6 +5,12 @@ Toutes les modifications notables de ce projet sont documentées dans ce fichier
 Le format est basé sur [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/),
 et ce projet adhère au [Semantic Versioning](https://semver.org/lang/fr/).
 
+## [1.4.1] — 2026-05-16
+
+### Corrigé
+
+- **Lisibilité du sélecteur de joueur** — Les options de la liste déroulante étaient illisibles (texte clair sur fond blanc du navigateur). Ajout d'un fond sombre (`#1e1b2e`) et d'un texte clair (`#e5e7eb`) sur les `<option>` du `<select>`.
+
 ## [1.4.0] — 2026-05-16
 
 ### Ajouté
