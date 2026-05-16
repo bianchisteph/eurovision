@@ -185,6 +185,18 @@
       <section id="tab-admin" class="pt-6 hidden">
         <h2 class="text-lg font-bold mb-1">⚡ Résultats Officiels</h2>
         <p class="text-gray-400 text-xs mb-4">Saisis le vrai Top 10 de la finale Eurovision.</p>
+        <!-- Fetch live results -->
+        <div class="mb-4">
+          <div class="flex gap-2">
+            <button onclick="fetchLiveResults()" id="btn-fetch-live" class="flex-1 py-3 rounded-xl text-sm font-bold bg-cyan-500/15 text-cyan-400 hover:bg-cyan-500/25 transition-all shadow-lg flex items-center justify-center gap-2">
+              🌐 Récupérer le classement
+            </button>
+            <button onclick="toggleAutoFetch()" id="btn-auto-fetch" class="px-4 py-3 rounded-xl text-sm font-bold bg-white/5 text-gray-400 hover:bg-white/10 transition-all shadow-lg">
+              🔄 Auto
+            </button>
+          </div>
+          <p id="fetch-status" class="text-xs text-gray-500 text-center mt-1.5 hidden"></p>
+        </div>
         <div class="space-y-2.5" id="admin-list"></div>
         <div class="mt-6 flex gap-3">
           <button onclick="clearAdmin()" class="px-4 py-2.5 rounded-xl text-sm font-medium bg-red-500/10 text-red-400 hover:bg-red-500/20 transition-all">
@@ -291,6 +303,7 @@
   let votesLocked = false;
   let allowUnlock = false;
   let adminAuthed = false;
+  let autoFetchInterval = null;
 
   // =====================================================================
   //  CRYPTO
@@ -410,6 +423,7 @@
 
   function logout() {
     try { localStorage.removeItem(USER_KEY); localStorage.removeItem(PWD_KEY); } catch(e){}
+    if (autoFetchInterval) { clearInterval(autoFetchInterval); autoFetchInterval = null; }
     currentUser = null; displayName = ""; adminAuthed = false;
     show("screen-login");
     document.getElementById("login-name").value = "";
@@ -422,6 +436,10 @@
   let currentTab = "prono";
   function navigate(tab) {
     if (tab === "admin" && !adminAuthed) { showAdminModal(); return; }
+    if (tab !== "admin" && autoFetchInterval) {
+      clearInterval(autoFetchInterval);
+      autoFetchInterval = null;
+    }
     currentTab = tab;
     ["prono","classement","admin"].forEach(t => {
       document.getElementById(`tab-${t}`).classList.toggle("hidden", t !== tab);
@@ -799,6 +817,157 @@
     toast(allowUnlock ? "Déverrouillage interdit 🔒" : "Déverrouillage autorisé 🔓");
   }
 
+  // =====================================================================
+  //  FETCH LIVE RESULTS
+  // =====================================================================
+  const COUNTRY_EN_TO_FR = {
+    "Albania":"Albanie","Australia":"Australie","Austria":"Autriche",
+    "Belgium":"Belgique","Bulgaria":"Bulgarie","Croatia":"Croatie",
+    "Cyprus":"Chypre","Czechia":"Tchéquie","Denmark":"Danemark",
+    "Finland":"Finlande","France":"France","Germany":"Allemagne",
+    "Greece":"Grèce","Israel":"Israël","Italy":"Italie",
+    "Lithuania":"Lituanie","Malta":"Malte","Moldova":"Moldavie",
+    "Norway":"Norvège","Poland":"Pologne","Romania":"Roumanie",
+    "Serbia":"Serbie","Sweden":"Suède","Ukraine":"Ukraine",
+    "United Kingdom":"Royaume-Uni"
+  };
+
+  async function fetchLiveResults() {
+    const btn = document.getElementById("btn-fetch-live");
+    const status = document.getElementById("fetch-status");
+    btn.disabled = true;
+    btn.textContent = "⏳ Récupération en cours...";
+    status.classList.remove("hidden");
+    status.textContent = "Connexion à eurovisionworld.com...";
+    status.className = "text-xs text-gray-500 text-center mt-1.5";
+
+    try {
+      const proxyUrl = "https://api.allorigins.win/raw?url=" + encodeURIComponent("https://eurovisionworld.com/eurovision/2026");
+      const resp = await fetch(proxyUrl);
+      if (!resp.ok) throw new Error("Erreur réseau : " + resp.status);
+      const html = await resp.text();
+
+      const parser = new DOMParser();
+      const doc = parser.parseFromString(html, "text/html");
+
+      // Find the main results table — rows with voting points
+      const rows = doc.querySelectorAll("table tr, .voting_table tr");
+      const results = [];
+
+      for (const row of rows) {
+        const cells = row.querySelectorAll("td");
+        if (cells.length < 2) continue;
+
+        // Look for rows with country name and points
+        let countryName = null;
+        let points = null;
+
+        for (const cell of cells) {
+          const text = cell.textContent.trim();
+          // Check if text matches a known country
+          if (!countryName && COUNTRY_EN_TO_FR[text]) {
+            countryName = text;
+          }
+          // Check for numeric points
+          const num = parseInt(text);
+          if (!isNaN(num) && num > 0 && num <= 500) {
+            points = num;
+          }
+        }
+
+        if (countryName && points !== null) {
+          results.push({ country: countryName, points });
+        }
+      }
+
+      if (results.length === 0) {
+        // Fallback: try parsing from text pattern "Country ... NNN pts" or table order
+        const allText = html;
+        const tableMatch = allText.match(/<table[^>]*id="voting_table"[^>]*>([\s\S]*?)<\/table>/i);
+        if (tableMatch) {
+          const trs = tableMatch[1].match(/<tr[\s\S]*?<\/tr>/gi) || [];
+          for (const tr of trs) {
+            for (const [en, fr] of Object.entries(COUNTRY_EN_TO_FR)) {
+              if (tr.includes(en)) {
+                const ptsMatch = tr.match(/(\d+)\s*(?:pts?|points?)/i) || tr.match(/>(\d{2,3})</);
+                if (ptsMatch) {
+                  results.push({ country: en, points: parseInt(ptsMatch[1]) });
+                }
+                break;
+              }
+            }
+          }
+        }
+      }
+
+      if (results.length === 0) {
+        status.textContent = "⚠️ Aucun résultat disponible pour le moment — la finale n'a peut-être pas encore commencé.";
+        status.className = "text-xs text-amber-400 text-center mt-1.5";
+        btn.disabled = false;
+        btn.innerHTML = "🌐 Récupérer le classement en direct";
+        return;
+      }
+
+      // Sort by points descending and take top 10
+      results.sort((a, b) => b.points - a.points);
+      const top10 = results.slice(0, 10);
+
+      // Map to French names
+      const mapped = top10.map(r => COUNTRY_EN_TO_FR[r.country]).filter(c => c && COUNTRIES.includes(c));
+
+      if (mapped.length < 10) {
+        status.textContent = `⚠️ Seulement ${mapped.length} résultat(s) trouvé(s) — le classement est peut-être encore partiel.`;
+        status.className = "text-xs text-amber-400 text-center mt-1.5";
+      } else {
+        status.textContent = "✅ Top 10 récupéré avec succès !";
+        status.className = "text-xs text-emerald-400 text-center mt-1.5";
+      }
+
+      // Fill realResults with what we found (pad to 10)
+      realResults = [...mapped, ...Array(10).fill("")].slice(0, 10);
+      renderAdmin();
+      toast(`${mapped.length} résultat(s) récupéré(s) ! Vérifie et publie.`);
+
+    } catch(e) {
+      console.error("Fetch live results error:", e);
+      status.textContent = "❌ Impossible de récupérer les résultats. Réessaie plus tard.";
+      status.className = "text-xs text-red-400 text-center mt-1.5";
+      toast("Erreur de récupération","error");
+    } finally {
+      btn.disabled = false;
+      btn.innerHTML = "🌐 Récupérer le classement en direct";
+    }
+  }
+
+  function toggleAutoFetch() {
+    if (autoFetchInterval) {
+      clearInterval(autoFetchInterval);
+      autoFetchInterval = null;
+      updateAutoFetchBtn();
+      toast("Auto-refresh désactivé","info");
+    } else {
+      fetchLiveResults();
+      autoFetchInterval = setInterval(fetchLiveResults, 60000);
+      updateAutoFetchBtn();
+      toast("Auto-refresh activé (60s)");
+    }
+  }
+
+  function updateAutoFetchBtn() {
+    const btn = document.getElementById("btn-auto-fetch");
+    if (!btn) return;
+    if (autoFetchInterval) {
+      btn.textContent = "⏹️ Stop";
+      btn.className = "px-4 py-3 rounded-xl text-sm font-bold bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500/30 transition-all shadow-lg";
+    } else {
+      btn.textContent = "🔄 Auto";
+      btn.className = "px-4 py-3 rounded-xl text-sm font-bold bg-white/5 text-gray-400 hover:bg-white/10 transition-all shadow-lg";
+    }
+  }
+
+  // =====================================================================
+  //  ADMIN — VOTE LOCK
+  // =====================================================================
   function updateVoteLockBtn() {
     const btn = document.getElementById("btn-vote-lock");
     if (!btn) return;

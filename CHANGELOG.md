@@ -5,6 +5,18 @@ Toutes les modifications notables de ce projet sont documentées dans ce fichier
 Le format est basé sur [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/),
 et ce projet adhère au [Semantic Versioning](https://semver.org/lang/fr/).
 
+## [1.3.0] — 2026-05-16
+
+### Ajouté
+
+- Bouton **🌐 Récupérer le classement en direct** dans l'onglet Admin — scrape les résultats depuis eurovisionworld.com via proxy CORS (allorigins.win)
+- Bouton **🔄 Auto** pour activer/désactiver le rafraîchissement automatique des résultats toutes les 60 secondes
+- Mapping des noms de pays anglais → français (`COUNTRY_EN_TO_FR`) pour la récupération live
+- Fonction `fetchLiveResults()` — parsing HTML, extraction des pays + points, tri Top 10
+- Fonction `toggleAutoFetch()` — gestion de l'intervalle d'auto-refresh
+- Variable d'état `autoFetchInterval` pour suivre le timer d'auto-refresh
+- Arrêt automatique de l'auto-refresh en quittant l'onglet admin ou à la déconnexion
+
 ## [1.2.0] — 2026-05-16
 
 ### Ajouté
@@ -68,6 +80,7 @@ et ce projet adhère au [Semantic Versioning](https://semver.org/lang/fr/).
 - Fonction d'échappement HTML (`esc()`) pour la sécurité XSS
 - Système de toasts pour les notifications
 
+[1.3.0]: https://github.com/bianchisteph/eurovision/compare/v1.2.0...v1.3.0
 [1.2.0]: https://github.com/bianchisteph/eurovision/compare/v1.1.0...v1.2.0
 [1.1.0]: https://github.com/bianchisteph/eurovision/compare/v1.0.0...v1.1.0
 [1.0.0]: https://github.com/bianchisteph/eurovision/releases/tag/v1.0.0
