@@ -3,9 +3,9 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>🎤 Eurovision 2026 — Jeu de Pronostics</title>
+  <title>MPP — Mon Petit Prono | Eurovision 2026</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎤</text></svg>">
   <script src="https://cdn.tailwindcss.com"></script>
-  <!-- Firebase SDK (compat for simplicity) -->
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
   <script>
@@ -15,944 +15,774 @@
         extend: {
           colors: {
             euro: {
-              pink: '#e91e8c',
-              purple: '#7b2ff7',
-              blue: '#1e3a8a',
-              gold: '#fbbf24',
-              dark: '#0f0b1e',
-              card: '#1a1333',
-              cardHover: '#251d45',
+              pink: '#e91e8c', purple: '#7b2ff7', blue: '#1e3a8a',
+              gold: '#fbbf24', dark: '#0f0b1e', card: '#1a1333',
+              cardHover: '#251d45', surface: '#120e24',
             }
-          },
-          fontFamily: {
-            display: ['"Segoe UI"', 'system-ui', 'sans-serif'],
           }
         }
       }
     }
   </script>
   <style>
-    @keyframes gradient-shift {
-      0%, 100% { background-position: 0% 50%; }
-      50% { background-position: 100% 50%; }
-    }
-    @keyframes sparkle {
-      0%, 100% { opacity: 1; transform: scale(1); }
-      50% { opacity: 0.5; transform: scale(1.2); }
-    }
-    @keyframes slideUp {
-      from { opacity: 0; transform: translateY(20px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-    @keyframes podiumRise {
-      from { transform: scaleY(0); }
-      to { transform: scaleY(1); }
-    }
-    @keyframes pulse-dot {
-      0%, 100% { opacity: 1; }
-      50% { opacity: 0.3; }
-    }
+    *, *::before, *::after { box-sizing: border-box; }
+    @keyframes gradient-shift { 0%,100%{background-position:0% 50%} 50%{background-position:100% 50%} }
+    @keyframes slideUp { from{opacity:0;transform:translateY(24px)} to{opacity:1;transform:translateY(0)} }
+    @keyframes fadeIn { from{opacity:0} to{opacity:1} }
+    @keyframes pulse-dot { 0%,100%{opacity:1} 50%{opacity:.3} }
+    @keyframes podiumRise { from{transform:scaleY(0)} to{transform:scaleY(1)} }
+    @keyframes confetti { 0%{transform:translateY(0) rotate(0)} 100%{transform:translateY(105vh) rotate(720deg)} }
     .gradient-bg {
-      background: linear-gradient(135deg, #0f0b1e 0%, #1a1040 25%, #0f0b1e 50%, #1a0a2e 75%, #0f0b1e 100%);
-      background-size: 400% 400%;
-      animation: gradient-shift 15s ease infinite;
+      background: linear-gradient(135deg,#0f0b1e 0%,#1a1040 25%,#0f0b1e 50%,#1a0a2e 75%,#0f0b1e 100%);
+      background-size:400% 400%; animation:gradient-shift 15s ease infinite;
     }
-    .euro-gradient {
-      background: linear-gradient(135deg, #e91e8c, #7b2ff7, #1e3a8a);
-    }
-    .euro-gradient-text {
-      background: linear-gradient(135deg, #e91e8c, #7b2ff7);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-    }
-    .card-glow {
-      box-shadow: 0 0 20px rgba(123, 47, 247, 0.15), 0 0 40px rgba(233, 30, 140, 0.05);
-    }
-    .card-glow:hover {
-      box-shadow: 0 0 30px rgba(123, 47, 247, 0.25), 0 0 60px rgba(233, 30, 140, 0.1);
-    }
-    .sparkle { animation: sparkle 2s ease-in-out infinite; }
-    .slide-up { animation: slideUp 0.4s ease-out forwards; }
-    .tab-active {
-      background: linear-gradient(135deg, #e91e8c, #7b2ff7) !important;
-      color: white !important;
-      box-shadow: 0 4px 15px rgba(123, 47, 247, 0.4);
-    }
+    .euro-gradient { background:linear-gradient(135deg,#e91e8c,#7b2ff7,#1e3a8a); }
+    .euro-gradient-text { background:linear-gradient(135deg,#e91e8c,#7b2ff7); -webkit-background-clip:text; -webkit-text-fill-color:transparent; }
+    .slide-up { animation:slideUp .45s ease-out both; }
+    .fade-in { animation:fadeIn .3s ease-out both; }
+    .card-glow { box-shadow:0 0 25px rgba(123,47,247,.12), 0 0 50px rgba(233,30,140,.04); }
+    .card-glow:hover { box-shadow:0 0 35px rgba(123,47,247,.22), 0 0 70px rgba(233,30,140,.08); }
+    .podium-bar { transform-origin:bottom; animation:podiumRise .6s ease-out both; }
     select {
-      appearance: none;
-      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%239ca3af' d='M6 8.825a.5.5 0 0 1-.354-.146l-4-4a.5.5 0 1 1 .708-.708L6 7.617l3.646-3.646a.5.5 0 1 1 .708.708l-4 4A.5.5 0 0 1 6 8.825z'/%3E%3C/svg%3E");
-      background-repeat: no-repeat;
-      background-position: right 0.75rem center;
-      background-size: 12px;
+      appearance:none;
+      background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%239ca3af' d='M6 8.825a.5.5 0 0 1-.354-.146l-4-4a.5.5 0 1 1 .708-.708L6 7.617l3.646-3.646a.5.5 0 1 1 .708.708l-4 4A.5.5 0 0 1 6 8.825z'/%3E%3C/svg%3E");
+      background-repeat:no-repeat; background-position:right .75rem center; background-size:12px;
     }
-    select:focus { outline: none; box-shadow: 0 0 0 2px #7b2ff7; }
-    .rank-badge {
-      width: 28px; height: 28px;
-      display: inline-flex; align-items: center; justify-content: center;
-      border-radius: 50%; font-weight: 700; font-size: 0.8rem;
+    select:focus { outline:none; box-shadow:0 0 0 2px #7b2ff7; }
+    .rank-badge { width:30px;height:30px; display:inline-flex;align-items:center;justify-content:center; border-radius:50%;font-weight:700;font-size:.8rem; flex-shrink:0; }
+    .toast-container { position:fixed;bottom:1.5rem;left:50%;transform:translateX(-50%);z-index:200; display:flex;flex-direction:column;gap:.5rem;align-items:center; }
+    .toast { animation:slideUp .3s ease-out; white-space:nowrap; }
+    .sync-dot { width:8px;height:8px;border-radius:50%;display:inline-block; }
+    .sync-dot.on { background:#10b981; animation:pulse-dot 2s infinite; }
+    .sync-dot.off { background:#ef4444; }
+    .confetti-piece {
+      position:fixed; top:-20px; z-index:300; width:10px; height:10px; border-radius:2px;
+      animation:confetti 3s linear forwards; pointer-events:none;
     }
-    .podium-bar { transform-origin: bottom; animation: podiumRise 0.6s ease-out forwards; }
-    .score-row { animation: slideUp 0.3s ease-out forwards; }
-    .score-row:nth-child(2) { animation-delay: 0.05s; }
-    .score-row:nth-child(3) { animation-delay: 0.1s; }
-    .score-row:nth-child(4) { animation-delay: 0.15s; }
-    .score-row:nth-child(5) { animation-delay: 0.2s; }
-    .score-row:nth-child(6) { animation-delay: 0.25s; }
-    .score-row:nth-child(7) { animation-delay: 0.3s; }
-    ::-webkit-scrollbar { width: 8px; }
-    ::-webkit-scrollbar-track { background: #1a1333; }
-    ::-webkit-scrollbar-thumb { background: #7b2ff7; border-radius: 4px; }
-    .toast {
-      position: fixed; bottom: 2rem; right: 2rem; z-index: 100;
-      animation: slideUp 0.3s ease-out;
-    }
-    .sync-dot {
-      width: 8px; height: 8px; border-radius: 50%; display: inline-block;
-    }
-    .sync-dot.connected { background: #10b981; animation: pulse-dot 2s infinite; }
-    .sync-dot.disconnected { background: #ef4444; }
-    .config-overlay {
-      position: fixed; inset: 0; z-index: 200;
-      background: rgba(15, 11, 30, 0.95); backdrop-filter: blur(12px);
-      display: flex; align-items: center; justify-content: center;
-    }
+    ::-webkit-scrollbar { width:6px; }
+    ::-webkit-scrollbar-track { background:transparent; }
+    ::-webkit-scrollbar-thumb { background:#7b2ff740; border-radius:3px; }
+    body { overscroll-behavior:none; }
+    .nav-pill { transition:all .25s; }
+    .nav-pill.active { background:linear-gradient(135deg,#e91e8c,#7b2ff7)!important; color:#fff!important; box-shadow:0 4px 15px rgba(123,47,247,.4); }
+    .lock-badge { display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:9999px;font-size:.65rem;font-weight:600; }
   </style>
 </head>
-<body class="gradient-bg min-h-screen font-display text-gray-200">
+<body class="gradient-bg min-h-screen text-gray-200" style="font-family:'Segoe UI',system-ui,sans-serif">
 
-  <!-- Firebase Config Overlay (shown if not configured) -->
-  <div id="config-overlay" class="config-overlay hidden">
-    <div class="bg-euro-card rounded-2xl p-8 max-w-lg w-full mx-4 card-glow slide-up">
-      <h2 class="text-2xl font-bold euro-gradient-text mb-2">⚙️ Configuration Firebase</h2>
-      <p class="text-gray-400 text-sm mb-6">Entrez votre configuration Firebase pour activer la synchronisation en temps réel entre tous les joueurs.</p>
-      <div class="space-y-3">
-        <div>
-          <label class="text-xs text-gray-400 mb-1 block">API Key</label>
-          <input id="cfg-apiKey" type="text" placeholder="AIzaSy..." class="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-gray-200 focus:outline-none focus:border-euro-purple">
-        </div>
-        <div>
-          <label class="text-xs text-gray-400 mb-1 block">Project ID</label>
-          <input id="cfg-projectId" type="text" placeholder="mon-projet-12345" class="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-gray-200 focus:outline-none focus:border-euro-purple">
-        </div>
-        <div>
-          <label class="text-xs text-gray-400 mb-1 block">Database URL</label>
-          <input id="cfg-databaseURL" type="text" placeholder="https://mon-projet-12345-default-rtdb.europe-west1.firebasedatabase.app" class="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-gray-200 focus:outline-none focus:border-euro-purple">
-        </div>
+  <!-- ======================== SCREEN: FIREBASE CONFIG ======================== -->
+  <div id="screen-config" class="min-h-screen flex items-center justify-center px-4 hidden">
+    <div class="bg-euro-card rounded-2xl p-8 max-w-md w-full card-glow slide-up text-center">
+      <div class="text-5xl mb-3">⚙️</div>
+      <h2 class="text-xl font-bold euro-gradient-text mb-1">Configuration Firebase</h2>
+      <p class="text-gray-400 text-sm mb-6">Nécessaire pour la synchronisation temps réel entre joueurs.</p>
+      <div class="space-y-3 text-left">
+        <input id="cfg-apiKey" type="text" placeholder="API Key (AIzaSy...)" class="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2.5 text-sm text-gray-200 focus:outline-none focus:border-euro-purple placeholder-gray-500">
+        <input id="cfg-projectId" type="text" placeholder="Project ID" class="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2.5 text-sm text-gray-200 focus:outline-none focus:border-euro-purple placeholder-gray-500">
+        <input id="cfg-databaseURL" type="text" placeholder="Database URL (https://...firebasedatabase.app)" class="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2.5 text-sm text-gray-200 focus:outline-none focus:border-euro-purple placeholder-gray-500">
       </div>
-      <div class="mt-6 flex gap-3">
-        <button onclick="saveFirebaseConfig()" class="flex-1 px-6 py-2.5 rounded-xl text-sm font-semibold text-white euro-gradient hover:opacity-90 transition-all shadow-lg">
-          🚀 Connecter
-        </button>
-        <button onclick="skipFirebase()" class="px-4 py-2.5 rounded-xl text-sm font-medium bg-white/5 hover:bg-white/10 transition-all text-gray-400">
-          Mode hors-ligne →
-        </button>
-      </div>
-      <p class="text-xs text-gray-500 mt-4">💡 Voir les instructions ci-dessous pour créer un projet Firebase gratuit.</p>
+      <button onclick="connectFirebase()" class="mt-6 w-full py-3 rounded-xl font-bold text-white euro-gradient hover:opacity-90 transition-all shadow-lg">
+        Connecter 🚀
+      </button>
     </div>
   </div>
 
-  <!-- Header -->
-  <header class="relative overflow-hidden py-8 text-center">
-    <div class="absolute inset-0 opacity-10">
-      <div class="absolute top-4 left-[10%] text-4xl sparkle">✨</div>
-      <div class="absolute top-8 left-[30%] text-3xl sparkle" style="animation-delay:0.5s">🎵</div>
-      <div class="absolute top-3 right-[25%] text-4xl sparkle" style="animation-delay:1s">⭐</div>
-      <div class="absolute top-10 right-[10%] text-3xl sparkle" style="animation-delay:1.5s">🎤</div>
-    </div>
-    <h1 class="text-5xl md:text-6xl font-extrabold euro-gradient-text mb-2 relative z-10">
-      Eurovision 2026
-    </h1>
-    <p class="text-lg text-gray-400 relative z-10">Jeu de Pronostics — Finale</p>
-    <div class="mt-3 flex justify-center items-center gap-2 relative z-10">
-      <div class="h-1 w-16 rounded-full bg-euro-pink"></div>
-      <div class="h-1 w-16 rounded-full bg-euro-purple"></div>
-      <div class="h-1 w-16 rounded-full bg-blue-700"></div>
-    </div>
-    <div class="mt-2 flex justify-center items-center gap-1.5 relative z-10">
-      <span id="sync-indicator" class="sync-dot disconnected"></span>
-      <span id="sync-label" class="text-xs text-gray-500">Hors-ligne</span>
-    </div>
-  </header>
-
-  <!-- Navigation Sections -->
-  <nav class="sticky top-0 z-50 bg-euro-dark/80 backdrop-blur-md border-b border-white/5">
-    <div class="max-w-6xl mx-auto flex justify-center gap-2 p-3">
-      <button onclick="showSection('pronostics')" id="nav-pronostics"
-        class="px-5 py-2.5 rounded-xl text-sm font-semibold transition-all duration-300 bg-euro-card hover:bg-euro-cardHover">
-        🎯 Pronostics
+  <!-- ======================== SCREEN: LOGIN ======================== -->
+  <div id="screen-login" class="min-h-screen flex items-center justify-center px-4 hidden">
+    <div class="bg-euro-card rounded-2xl p-8 max-w-sm w-full card-glow slide-up text-center">
+      <div class="text-6xl mb-2">🎤</div>
+      <h1 class="text-3xl font-extrabold euro-gradient-text mb-1">MPP</h1>
+      <p class="text-gray-400 text-sm mb-6">Mon Petit Prono — Eurovision 2026</p>
+      <input id="login-name" type="text" maxlength="20" placeholder="Ton prénom..."
+        class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-center text-lg text-gray-200 focus:outline-none focus:border-euro-purple placeholder-gray-500"
+        onkeydown="if(event.key==='Enter')login()">
+      <button onclick="login()" class="mt-4 w-full py-3 rounded-xl font-bold text-white euro-gradient hover:opacity-90 transition-all shadow-lg text-lg">
+        C'est parti ! →
       </button>
-      <button onclick="showSection('resultats')" id="nav-resultats"
-        class="px-5 py-2.5 rounded-xl text-sm font-semibold transition-all duration-300 bg-euro-card hover:bg-euro-cardHover">
-        🏆 Résultats Réels
-      </button>
-      <button onclick="showSection('scores')" id="nav-scores"
-        class="px-5 py-2.5 rounded-xl text-sm font-semibold transition-all duration-300 bg-euro-card hover:bg-euro-cardHover">
-        📊 Classement
-      </button>
-    </div>
-  </nav>
-
-  <main class="max-w-6xl mx-auto px-4 pb-16">
-
-    <!-- ===================== SECTION 1: PRONOSTICS ===================== -->
-    <section id="section-pronostics" class="mt-8">
-      <div class="text-center mb-6">
-        <h2 class="text-2xl font-bold mb-1">🎯 Pronostics des Joueurs</h2>
-        <p class="text-gray-400 text-sm">Chaque joueur sélectionne son Top 10 dans l'ordre</p>
+      <div class="mt-4 flex items-center justify-center gap-1.5">
+        <span id="login-sync-dot" class="sync-dot off"></span>
+        <span id="login-sync-label" class="text-xs text-gray-500">Connexion...</span>
       </div>
+    </div>
+  </div>
 
-      <!-- Player Tabs -->
-      <div class="flex flex-wrap justify-center gap-2 mb-6" id="player-tabs"></div>
+  <!-- ======================== SCREEN: APP ======================== -->
+  <div id="screen-app" class="hidden">
 
-      <!-- Player Form -->
-      <div id="player-form-container" class="bg-euro-card rounded-2xl p-6 md:p-8 card-glow transition-all duration-300">
-        <div class="flex items-center justify-between mb-6">
-          <h3 class="text-xl font-bold" id="player-form-title">Joueur 1</h3>
-          <div id="player-progress" class="text-sm text-gray-400"></div>
+    <!-- Top bar -->
+    <header class="sticky top-0 z-50 bg-euro-dark/85 backdrop-blur-md border-b border-white/5">
+      <div class="max-w-2xl mx-auto flex items-center justify-between px-4 py-2.5">
+        <div class="flex items-center gap-2">
+          <span class="text-xl">🎤</span>
+          <span class="font-bold text-sm euro-gradient-text">MPP</span>
+          <span class="sync-dot on ml-1" id="app-sync-dot"></span>
         </div>
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4" id="player-selects"></div>
-        <div class="mt-6 flex flex-wrap gap-3 items-center justify-between">
-          <button onclick="clearCurrentPlayer()" class="px-4 py-2 rounded-lg text-sm font-medium bg-red-500/10 text-red-400 hover:bg-red-500/20 transition-all">
-            🗑️ Réinitialiser ce joueur
-          </button>
-          <button onclick="saveAndNext()" class="px-6 py-2.5 rounded-xl text-sm font-semibold text-white euro-gradient hover:opacity-90 transition-all shadow-lg">
-            Sauvegarder & Suivant →
-          </button>
+        <div class="flex items-center gap-2">
+          <span class="text-sm text-gray-400" id="app-username"></span>
+          <button onclick="logout()" class="text-xs text-gray-500 hover:text-gray-300 transition-colors underline">Changer</button>
         </div>
       </div>
-    </section>
-
-    <!-- ===================== SECTION 2: RÉSULTATS RÉELS ===================== -->
-    <section id="section-resultats" class="mt-8 hidden">
-      <div class="text-center mb-6">
-        <h2 class="text-2xl font-bold mb-1">🏆 Résultats Officiels</h2>
-        <p class="text-gray-400 text-sm">Saisissez le vrai Top 10 de l'Eurovision</p>
-      </div>
-      <div class="bg-euro-card rounded-2xl p-6 md:p-8 card-glow">
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4" id="real-selects"></div>
-        <div class="mt-6 flex flex-wrap gap-3 items-center justify-between">
-          <button onclick="clearRealResults()" class="px-4 py-2 rounded-lg text-sm font-medium bg-red-500/10 text-red-400 hover:bg-red-500/20 transition-all">
-            🗑️ Réinitialiser
-          </button>
-          <button onclick="saveRealResults()" class="px-6 py-2.5 rounded-xl text-sm font-semibold text-white euro-gradient hover:opacity-90 transition-all shadow-lg">
-            💾 Sauvegarder les résultats
-          </button>
-        </div>
-      </div>
-    </section>
-
-    <!-- ===================== SECTION 3: CLASSEMENT ===================== -->
-    <section id="section-scores" class="mt-8 hidden">
-      <div class="text-center mb-6">
-        <h2 class="text-2xl font-bold mb-1">📊 Classement Final</h2>
-        <p class="text-gray-400 text-sm">Qui a les meilleurs pronostics ?</p>
-      </div>
-
-      <div class="text-center mb-6">
-        <button onclick="calculateScores()"
-          class="px-8 py-3 rounded-xl text-base font-bold text-white euro-gradient hover:opacity-90 transition-all shadow-lg hover:shadow-xl transform hover:scale-105">
-          🚀 Calculer le classement
+      <!-- Nav -->
+      <div class="max-w-2xl mx-auto flex gap-1.5 px-4 pb-2.5">
+        <button onclick="navigate('prono')" id="nav-prono" class="nav-pill flex-1 py-2 rounded-xl text-xs font-semibold bg-euro-card">
+          🎯 Mes Pronos
+        </button>
+        <button onclick="navigate('classement')" id="nav-classement" class="nav-pill flex-1 py-2 rounded-xl text-xs font-semibold bg-euro-card">
+          🏆 Classement
+        </button>
+        <button onclick="navigate('admin')" id="nav-admin" class="nav-pill flex-1 py-2 rounded-xl text-xs font-semibold bg-euro-card">
+          ⚡ Résultats
         </button>
       </div>
+    </header>
 
-      <!-- Podium -->
-      <div id="podium-container" class="hidden mb-8">
-        <div class="flex items-end justify-center gap-3 h-56" id="podium"></div>
-      </div>
+    <main class="max-w-2xl mx-auto px-4 pb-24">
 
-      <!-- Scores Table -->
-      <div id="scores-table-container" class="hidden">
-        <div class="bg-euro-card rounded-2xl overflow-hidden card-glow">
+      <!-- ======= TAB: MES PRONOS ======= -->
+      <section id="tab-prono" class="pt-6 hidden">
+        <div class="flex items-center justify-between mb-4">
+          <h2 class="text-lg font-bold">🎯 Mon Top 10</h2>
+          <div id="prono-status" class="text-xs text-gray-500"></div>
+        </div>
+        <div id="prono-locked-banner" class="hidden mb-4 p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-sm font-medium text-center">
+          ✅ Tes pronos sont verrouillés — bonne chance !
+        </div>
+        <div class="space-y-2.5" id="prono-list"></div>
+        <div class="mt-6 flex gap-3" id="prono-actions">
+          <button onclick="clearMyPronos()" id="btn-clear" class="px-4 py-2.5 rounded-xl text-sm font-medium bg-red-500/10 text-red-400 hover:bg-red-500/20 transition-all">
+            🗑️ Effacer
+          </button>
+          <button onclick="lockPronos()" id="btn-lock" class="flex-1 py-2.5 rounded-xl text-sm font-bold text-white euro-gradient hover:opacity-90 transition-all shadow-lg">
+            🔒 Valider mes pronos
+          </button>
+        </div>
+      </section>
+
+      <!-- ======= TAB: CLASSEMENT ======= -->
+      <section id="tab-classement" class="pt-6 hidden">
+        <h2 class="text-lg font-bold mb-4">🏆 Classement en direct</h2>
+
+        <div id="classement-waiting" class="hidden text-center py-12 text-gray-500">
+          <div class="text-4xl mb-3">⏳</div>
+          <p class="text-sm">Les résultats officiels n'ont pas encore été saisis.</p>
+          <p class="text-xs mt-1">Le classement apparaîtra automatiquement.</p>
+        </div>
+
+        <!-- Players status (before results) -->
+        <div id="classement-players" class="hidden space-y-2 mb-4"></div>
+
+        <!-- Podium -->
+        <div id="podium-box" class="hidden mb-6">
+          <div class="flex items-end justify-center gap-3 h-48" id="podium"></div>
+        </div>
+        <!-- Table -->
+        <div id="classement-table" class="hidden bg-euro-card rounded-2xl overflow-hidden card-glow">
           <table class="w-full">
             <thead>
-              <tr class="border-b border-white/10">
-                <th class="px-4 py-3 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider">#</th>
-                <th class="px-4 py-3 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider">Joueur</th>
-                <th class="px-4 py-3 text-center text-xs font-semibold text-gray-400 uppercase tracking-wider">Score</th>
-                <th class="px-4 py-3 text-center text-xs font-semibold text-gray-400 uppercase tracking-wider">🎯 Bonus</th>
-                <th class="px-4 py-3 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider hidden md:table-cell">Détails</th>
+              <tr class="border-b border-white/10 text-xs text-gray-400 uppercase tracking-wider">
+                <th class="px-4 py-2.5 text-left">#</th>
+                <th class="px-4 py-2.5 text-left">Joueur</th>
+                <th class="px-4 py-2.5 text-center">Score</th>
+                <th class="px-4 py-2.5 text-center">🎯</th>
               </tr>
             </thead>
-            <tbody id="scores-body"></tbody>
+            <tbody id="classement-body"></tbody>
           </table>
         </div>
-      </div>
+        <!-- Detail cards -->
+        <div id="detail-cards" class="mt-5 space-y-3 hidden"></div>
+      </section>
 
-      <!-- Detail cards (mobile-friendly breakdown) -->
-      <div id="detail-cards" class="mt-6 grid grid-cols-1 md:grid-cols-2 gap-4 hidden"></div>
-    </section>
-  </main>
+      <!-- ======= TAB: ADMIN ======= -->
+      <section id="tab-admin" class="pt-6 hidden">
+        <h2 class="text-lg font-bold mb-1">⚡ Résultats Officiels</h2>
+        <p class="text-gray-400 text-xs mb-4">Saisis le vrai Top 10 de la finale Eurovision.</p>
+        <div class="space-y-2.5" id="admin-list"></div>
+        <div class="mt-6 flex gap-3">
+          <button onclick="clearAdmin()" class="px-4 py-2.5 rounded-xl text-sm font-medium bg-red-500/10 text-red-400 hover:bg-red-500/20 transition-all">
+            🗑️ Effacer
+          </button>
+          <button onclick="saveAdmin()" class="flex-1 py-2.5 rounded-xl text-sm font-bold text-white euro-gradient hover:opacity-90 transition-all shadow-lg">
+            💾 Publier les résultats
+          </button>
+        </div>
+        <!-- Players overview -->
+        <div class="mt-8">
+          <h3 class="text-sm font-semibold text-gray-400 mb-3">👥 Joueurs inscrits</h3>
+          <div id="admin-players" class="space-y-2"></div>
+        </div>
+      </section>
 
-  <!-- Toast container -->
-  <div id="toast-container"></div>
+    </main>
+  </div>
+
+  <!-- Toast -->
+  <div class="toast-container" id="toast-container"></div>
 
   <script>
-    // ==================== DATA ====================
-    const COUNTRIES = [
-      "Danemark", "Allemagne", "Israël", "Belgique", "Albanie",
-      "Grèce", "Ukraine", "Australie", "Serbie", "Malte",
-      "Tchéquie", "Bulgarie", "Croatie", "Royaume-Uni", "France",
-      "Moldavie", "Finlande", "Pologne", "Lituanie", "Suède",
-      "Chypre", "Italie", "Norvège", "Roumanie", "Autriche"
-    ].sort((a, b) => a.localeCompare(b, 'fr'));
+  // =====================================================================
+  //  CONSTANTS
+  // =====================================================================
+  const COUNTRIES = [
+    "Danemark","Allemagne","Israël","Belgique","Albanie","Grèce","Ukraine",
+    "Australie","Serbie","Malte","Tchéquie","Bulgarie","Croatie","Royaume-Uni",
+    "France","Moldavie","Finlande","Pologne","Lituanie","Suède","Chypre",
+    "Italie","Norvège","Roumanie","Autriche"
+  ].sort((a,b) => a.localeCompare(b,'fr'));
 
-    const PLAYERS = ["Joueur 1", "Joueur 2", "Joueur 3", "Joueur 4", "Joueur 5", "Joueur 6", "Joueur 7"];
+  const FLAGS = {
+    "Albanie":"🇦🇱","Allemagne":"🇩🇪","Australie":"🇦🇺","Autriche":"🇦🇹",
+    "Belgique":"🇧🇪","Bulgarie":"🇧🇬","Chypre":"🇨🇾","Croatie":"🇭🇷",
+    "Danemark":"🇩🇰","Finlande":"🇫🇮","France":"🇫🇷","Grèce":"🇬🇷",
+    "Israël":"🇮🇱","Italie":"🇮🇹","Lituanie":"🇱🇹","Malte":"🇲🇹",
+    "Moldavie":"🇲🇩","Norvège":"🇳🇴","Pologne":"🇵🇱","Roumanie":"🇷🇴",
+    "Royaume-Uni":"🇬🇧","Serbie":"🇷🇸","Suède":"🇸🇪","Tchéquie":"🇨🇿",
+    "Ukraine":"🇺🇦"
+  };
 
-    const COUNTRY_FLAGS = {
-      "Albanie": "🇦🇱", "Allemagne": "🇩🇪", "Australie": "🇦🇺", "Autriche": "🇦🇹",
-      "Belgique": "🇧🇪", "Bulgarie": "🇧🇬", "Chypre": "🇨🇾", "Croatie": "🇭🇷",
-      "Danemark": "🇩🇰", "Finlande": "🇫🇮", "France": "🇫🇷", "Grèce": "🇬🇷",
-      "Israël": "🇮🇱", "Italie": "🇮🇹", "Lituanie": "🇱🇹", "Malte": "🇲🇹",
-      "Moldavie": "🇲🇩", "Norvège": "🇳🇴", "Pologne": "🇵🇱", "Roumanie": "🇷🇴",
-      "Royaume-Uni": "🇬🇧", "Serbie": "🇷🇸", "Suède": "🇸🇪", "Tchéquie": "🇨🇿",
-      "Ukraine": "🇺🇦"
-    };
+  const POINTS = {1:12,2:10,3:8,4:7,5:6,6:5,7:4,8:3,9:2,10:1};
+  const RANK_LABELS = ["1er","2e","3e","4e","5e","6e","7e","8e","9e","10e"];
+  const PTS_LABELS = ["12 pts","10 pts","8 pts","7 pts","6 pts","5 pts","4 pts","3 pts","2 pts","1 pt"];
+  const MEDAL = ["🥇","🥈","🥉"];
+  const P_COLORS = ["#ec4899","#8b5cf6","#3b82f6","#10b981","#f59e0b","#ef4444","#06b6d4","#f97316","#14b8a6","#a855f7"];
 
-    const POINTS_MAP = { 1: 12, 2: 10, 3: 8, 4: 7, 5: 6, 6: 5, 7: 4, 8: 3, 9: 2, 10: 1 };
+  const FB_KEY = "mpp_firebase_config";
+  const USER_KEY = "mpp_username";
 
-    const RANK_LABELS = ["1er", "2e", "3e", "4e", "5e", "6e", "7e", "8e", "9e", "10e"];
-    const RANK_POINTS_LABELS = ["12 pts", "10 pts", "8 pts", "7 pts", "6 pts", "5 pts", "4 pts", "3 pts", "2 pts", "1 pt"];
+  // =====================================================================
+  //  STATE
+  // =====================================================================
+  let db = null;
+  let currentUser = null;
+  let displayName = "";
+  let allPlayers = {};
+  let realResults = [];
+  let isConnected = false;
 
-    const PLAYER_COLORS = [
-      { bg: "bg-pink-500", text: "text-pink-500", border: "border-pink-500", hex: "#ec4899" },
-      { bg: "bg-violet-500", text: "text-violet-500", border: "border-violet-500", hex: "#8b5cf6" },
-      { bg: "bg-blue-500", text: "text-blue-500", border: "border-blue-500", hex: "#3b82f6" },
-      { bg: "bg-emerald-500", text: "text-emerald-500", border: "border-emerald-500", hex: "#10b981" },
-      { bg: "bg-amber-500", text: "text-amber-500", border: "border-amber-500", hex: "#f59e0b" },
-      { bg: "bg-red-500", text: "text-red-500", border: "border-red-500", hex: "#ef4444" },
-      { bg: "bg-cyan-500", text: "text-cyan-500", border: "border-cyan-500", hex: "#06b6d4" },
-    ];
+  // =====================================================================
+  //  FIREBASE
+  // =====================================================================
+  function connectFirebase() {
+    const apiKey = document.getElementById("cfg-apiKey").value.trim();
+    const projectId = document.getElementById("cfg-projectId").value.trim();
+    const databaseURL = document.getElementById("cfg-databaseURL").value.trim();
+    if (!apiKey || !projectId || !databaseURL) { toast("Remplis tous les champs","error"); return; }
+    const config = { apiKey, projectId, databaseURL };
+    if (initFB(config)) {
+      try { localStorage.setItem(FB_KEY, JSON.stringify(config)); } catch(e){}
+      show("screen-login");
+    }
+  }
 
-    // ==================== STATE ====================
-    let currentPlayer = 0;
-    let playerNames = [...PLAYERS];
-    let predictions = Array.from({ length: 7 }, () => Array(10).fill(""));
-    let realResults = Array(10).fill("");
+  function initFB(config) {
+    try { if (firebase.apps.length) firebase.app().delete().catch(()=>{}); } catch(e){}
+    try {
+      firebase.initializeApp(config);
+      db = firebase.database();
+      db.ref(".info/connected").on("value", s => { isConnected = s.val()===true; syncUI(); });
+      db.ref("players").on("value", snap => { allPlayers = snap.val()||{}; onData(); });
+      db.ref("realResults").on("value", snap => {
+        const v = snap.val();
+        realResults = (v && Array.isArray(v)) ? v : [];
+        onData();
+      });
+      return true;
+    } catch(e) { console.error(e); toast("Erreur Firebase","error"); return false; }
+  }
 
-    // ==================== FIREBASE ====================
-    let db = null;
-    let firebaseConnected = false;
-    const FB_CONFIG_KEY = "eurovision2026_firebase_config";
-    const STORAGE_KEY = "eurovision2026";
+  function syncUI() {
+    document.querySelectorAll(".sync-dot").forEach(d => {
+      d.classList.toggle("on", isConnected);
+      d.classList.toggle("off", !isConnected);
+    });
+    const lbl = document.getElementById("login-sync-label");
+    if (lbl) lbl.textContent = isConnected ? "Connecté ✓" : "Hors-ligne";
+  }
 
-    function setSyncStatus(connected) {
-      firebaseConnected = connected;
-      const dot = document.getElementById("sync-indicator");
-      const label = document.getElementById("sync-label");
-      if (connected) {
-        dot.className = "sync-dot connected";
-        label.textContent = "Synchronisé en temps réel";
-        label.className = "text-xs text-emerald-400";
+  // =====================================================================
+  //  SCREENS
+  // =====================================================================
+  function show(id) {
+    ["screen-config","screen-login","screen-app"].forEach(s =>
+      document.getElementById(s).classList.toggle("hidden", s !== id)
+    );
+  }
+
+  function boot() {
+    let cfg = null;
+    try { cfg = JSON.parse(localStorage.getItem(FB_KEY)); } catch(e){}
+    if (cfg && cfg.apiKey) {
+      if (initFB(cfg)) {
+        const saved = localStorage.getItem(USER_KEY);
+        if (saved) {
+          displayName = saved;
+          currentUser = toKey(saved);
+          show("screen-app");
+          document.getElementById("app-username").textContent = displayName;
+          navigate("prono");
+        } else {
+          show("screen-login");
+        }
       } else {
-        dot.className = "sync-dot disconnected";
-        label.textContent = "Hors-ligne (localStorage)";
-        label.className = "text-xs text-gray-500";
+        show("screen-config");
       }
+    } else {
+      show("screen-config");
     }
+  }
 
-    function initFirebase(config) {
-      try {
-        if (firebase.apps.length) firebase.app().delete();
-      } catch (e) { /* ignore */ }
+  // =====================================================================
+  //  LOGIN / LOGOUT
+  // =====================================================================
+  function toKey(name) {
+    return name.toLowerCase()
+      .normalize("NFD").replace(/[\u0300-\u036f]/g,"")
+      .replace(/[^a-z0-9]/g,"_")
+      .replace(/_+/g,"_")
+      .replace(/^_|_$/g,"");
+  }
 
-      try {
-        firebase.initializeApp(config);
-        db = firebase.database();
+  function login() {
+    const raw = document.getElementById("login-name").value.trim();
+    if (!raw || raw.length < 2) { toast("Entre ton prénom (min 2 lettres)","error"); return; }
+    displayName = raw.charAt(0).toUpperCase() + raw.slice(1);
+    currentUser = toKey(raw);
+    if (!currentUser) { toast("Prénom invalide","error"); return; }
+    try { localStorage.setItem(USER_KEY, displayName); } catch(e){}
 
-        // Listen for connection state
-        db.ref(".info/connected").on("value", (snap) => {
-          setSyncStatus(snap.val() === true);
-        });
-
-        // ---- Real-time listeners ----
-        // Player names
-        db.ref("playerNames").on("value", (snap) => {
-          const val = snap.val();
-          if (val && Array.isArray(val)) {
-            playerNames = val;
-            renderPlayerTabs();
-            renderPlayerForm();
-          }
-        });
-
-        // Predictions
-        db.ref("predictions").on("value", (snap) => {
-          const val = snap.val();
-          if (val) {
-            for (let i = 0; i < 7; i++) {
-              if (val[i] && Array.isArray(val[i])) {
-                predictions[i] = val[i];
-              }
-            }
-            renderPlayerTabs();
-            renderPlayerForm();
-          }
-        });
-
-        // Real results
-        db.ref("realResults").on("value", (snap) => {
-          const val = snap.val();
-          if (val && Array.isArray(val)) {
-            realResults = val;
-            if (!document.getElementById("section-resultats").classList.contains("hidden")) {
-              renderRealResultsForm();
-            }
-          }
-        });
-
-        showToast("Firebase connecté ✓");
-        return true;
-      } catch (e) {
-        console.error("Firebase init error:", e);
-        showToast("Erreur de connexion Firebase", "error");
-        return false;
-      }
-    }
-
-    function saveFirebaseConfig() {
-      const apiKey = document.getElementById("cfg-apiKey").value.trim();
-      const projectId = document.getElementById("cfg-projectId").value.trim();
-      const databaseURL = document.getElementById("cfg-databaseURL").value.trim();
-
-      if (!apiKey || !projectId || !databaseURL) {
-        showToast("Remplissez tous les champs", "error");
-        return;
-      }
-
-      const config = { apiKey, projectId, databaseURL };
-
-      if (initFirebase(config)) {
-        try {
-          localStorage.setItem(FB_CONFIG_KEY, JSON.stringify(config));
-        } catch (e) { /* ignore */ }
-
-        // Push current local state to Firebase as seed data
-        pushFullStateToFirebase();
-        document.getElementById("config-overlay").classList.add("hidden");
-      }
-    }
-
-    function skipFirebase() {
-      document.getElementById("config-overlay").classList.add("hidden");
-      loadLocalState();
-      renderPlayerTabs();
-      renderPlayerForm();
-      showSection("pronostics");
-    }
-
-    function pushFullStateToFirebase() {
-      if (!db) return;
-      db.ref("playerNames").set(playerNames);
-      db.ref("predictions").set(predictions);
-      db.ref("realResults").set(realResults);
-    }
-
-    // ==================== PERSISTENCE (dual: Firebase + localStorage fallback) ====================
-    function saveState() {
-      // Always save locally as backup
-      try {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify({ playerNames, predictions, realResults }));
-      } catch (e) { /* ignore */ }
-    }
-
-    function savePlayerName(idx) {
-      saveState();
-      if (db) db.ref(`playerNames/${idx}`).set(playerNames[idx]);
-    }
-
-    function savePlayerPredictions(idx) {
-      saveState();
-      if (db) db.ref(`predictions/${idx}`).set(predictions[idx]);
-    }
-
-    function saveRealResultsData() {
-      saveState();
-      if (db) db.ref("realResults").set(realResults);
-    }
-
-    function loadLocalState() {
-      try {
-        const raw = localStorage.getItem(STORAGE_KEY);
-        if (!raw) return;
-        const state = JSON.parse(raw);
-        if (state.playerNames) playerNames = state.playerNames;
-        if (state.predictions) predictions = state.predictions;
-        if (state.realResults) realResults = state.realResults;
-      } catch (e) {
-        console.warn("Erreur chargement localStorage", e);
-      }
-    }
-
-    // ==================== TOAST ====================
-    function showToast(message, type = "success") {
-      const container = document.getElementById("toast-container");
-      const colors = {
-        success: "bg-emerald-600",
-        error: "bg-red-600",
-        info: "bg-blue-600"
-      };
-      const toast = document.createElement("div");
-      toast.className = `toast ${colors[type]} text-white px-5 py-3 rounded-xl shadow-2xl text-sm font-medium`;
-      toast.textContent = message;
-      container.appendChild(toast);
-      setTimeout(() => {
-        toast.style.opacity = "0";
-        toast.style.transition = "opacity 0.3s";
-        setTimeout(() => toast.remove(), 300);
-      }, 2500);
-    }
-
-    // ==================== SECTION NAVIGATION ====================
-    function showSection(name) {
-      ["pronostics", "resultats", "scores"].forEach(s => {
-        document.getElementById(`section-${s}`).classList.toggle("hidden", s !== name);
-        document.getElementById(`nav-${s}`).classList.toggle("tab-active", s === name);
-      });
-      if (name === "pronostics") renderPlayerForm();
-      if (name === "resultats") renderRealResultsForm();
-    }
-
-    // ==================== PLAYER TABS ====================
-    function renderPlayerTabs() {
-      const container = document.getElementById("player-tabs");
-      container.innerHTML = "";
-      playerNames.forEach((name, i) => {
-        const filled = predictions[i].filter(c => c !== "").length;
-        const btn = document.createElement("button");
-        btn.className = `relative px-4 py-2 rounded-xl text-sm font-semibold transition-all duration-300 ${
-          i === currentPlayer ? "tab-active" : "bg-euro-card hover:bg-euro-cardHover"
-        }`;
-        btn.innerHTML = `
-          <span class="truncate max-w-[100px] inline-block align-middle">${escapeHtml(name)}</span>
-          ${filled === 10
-            ? '<span class="ml-1 text-xs">✅</span>'
-            : `<span class="ml-1 text-xs opacity-60">${filled}/10</span>`
-          }
-        `;
-        btn.onclick = () => { currentPlayer = i; renderPlayerTabs(); renderPlayerForm(); };
-        container.appendChild(btn);
+    // Create player entry if new
+    if (!allPlayers[currentUser]) {
+      db.ref(`players/${currentUser}`).set({
+        name: displayName,
+        predictions: Array(10).fill(""),
+        locked: false
       });
     }
 
-    // ==================== PLAYER FORM ====================
-    function renderPlayerForm() {
-      const container = document.getElementById("player-selects");
-      container.innerHTML = "";
+    document.getElementById("app-username").textContent = displayName;
+    show("screen-app");
+    navigate("prono");
+    toast(`Salut ${esc(displayName)} ! 🎉`);
+  }
 
-      // Editable player name
-      const titleEl = document.getElementById("player-form-title");
-      titleEl.innerHTML = "";
-      const nameInput = document.createElement("input");
-      nameInput.type = "text";
-      nameInput.value = playerNames[currentPlayer];
-      nameInput.maxLength = 20;
-      nameInput.className = "bg-transparent border-b-2 border-euro-purple/50 focus:border-euro-pink text-xl font-bold outline-none w-48 transition-colors";
-      nameInput.addEventListener("change", () => {
-        const val = nameInput.value.trim();
-        if (val) {
-          playerNames[currentPlayer] = val;
-          savePlayerName(currentPlayer);
-          renderPlayerTabs();
+  function logout() {
+    try { localStorage.removeItem(USER_KEY); } catch(e){}
+    currentUser = null; displayName = "";
+    show("screen-login");
+    document.getElementById("login-name").value = "";
+  }
+
+  // =====================================================================
+  //  NAVIGATION
+  // =====================================================================
+  let currentTab = "prono";
+  function navigate(tab) {
+    currentTab = tab;
+    ["prono","classement","admin"].forEach(t => {
+      document.getElementById(`tab-${t}`).classList.toggle("hidden", t !== tab);
+      document.getElementById(`nav-${t}`).classList.toggle("active", t === tab);
+    });
+    render();
+  }
+
+  function onData() { render(); }
+
+  function render() {
+    if (!currentUser) return;
+    if (currentTab === "prono") renderProno();
+    if (currentTab === "classement") renderClassement();
+    if (currentTab === "admin") { renderAdmin(); renderAdminPlayers(); }
+  }
+
+  // =====================================================================
+  //  MES PRONOS
+  // =====================================================================
+  function getMyData() {
+    return allPlayers[currentUser] || { name: displayName, predictions: Array(10).fill(""), locked: false };
+  }
+
+  function renderProno() {
+    const data = getMyData();
+    const preds = data.predictions || Array(10).fill("");
+    const locked = !!data.locked;
+    const filled = preds.filter(c => c).length;
+
+    document.getElementById("prono-status").textContent = locked ? "Verrouillé 🔒" : `${filled}/10`;
+    document.getElementById("prono-locked-banner").classList.toggle("hidden", !locked);
+    document.getElementById("btn-lock").classList.toggle("hidden", locked);
+    document.getElementById("btn-clear").classList.toggle("hidden", locked);
+
+    const list = document.getElementById("prono-list");
+    list.innerHTML = "";
+
+    for (let i = 0; i < 10; i++) {
+      const row = document.createElement("div");
+      row.className = "flex items-center gap-2.5 slide-up";
+      row.style.animationDelay = `${i*25}ms`;
+
+      const badge = document.createElement("div");
+      const bc = i<3 ? ["bg-yellow-500 text-black","bg-gray-300 text-black","bg-amber-700 text-white"][i] : "bg-white/10 text-gray-300";
+      badge.className = `rank-badge ${bc}`;
+      badge.textContent = RANK_LABELS[i];
+
+      const pts = document.createElement("span");
+      pts.className = "text-[10px] text-gray-500 w-10 flex-shrink-0 hidden sm:block text-right";
+      pts.textContent = PTS_LABELS[i];
+
+      const sel = document.createElement("select");
+      sel.className = "flex-1 bg-white/5 border border-white/10 rounded-lg px-3 py-2.5 text-sm text-gray-200 hover:border-euro-purple/50 transition-colors cursor-pointer";
+      if (locked) { sel.disabled = true; sel.classList.add("opacity-60"); }
+
+      const def = document.createElement("option");
+      def.value = ""; def.textContent = "— Choisir —";
+      sel.appendChild(def);
+
+      const used = new Set(preds.filter((c,j) => c && j!==i));
+      COUNTRIES.forEach(c => {
+        if (used.has(c)) return;
+        const o = document.createElement("option");
+        o.value = c; o.textContent = `${FLAGS[c]||""} ${c}`;
+        if (preds[i] === c) o.selected = true;
+        sel.appendChild(o);
+      });
+
+      const idx = i;
+      sel.addEventListener("change", () => {
+        const np = [...(getMyData().predictions || Array(10).fill(""))];
+        np[idx] = sel.value;
+        db.ref(`players/${currentUser}/predictions`).set(np);
+      });
+
+      row.appendChild(badge);
+      row.appendChild(pts);
+      row.appendChild(sel);
+      list.appendChild(row);
+    }
+  }
+
+  function clearMyPronos() {
+    if (getMyData().locked) return;
+    db.ref(`players/${currentUser}/predictions`).set(Array(10).fill(""));
+    toast("Pronos effacés","info");
+  }
+
+  function lockPronos() {
+    const data = getMyData();
+    const filled = (data.predictions||[]).filter(c => c).length;
+    if (filled < 10) { toast(`Il manque ${10-filled} pays !`,"error"); return; }
+    db.ref(`players/${currentUser}/locked`).set(true);
+    toast("Pronos verrouillés ! 🔒 Bonne chance !");
+    confetti();
+  }
+
+  // =====================================================================
+  //  CLASSEMENT
+  // =====================================================================
+  function renderClassement() {
+    const hasResults = realResults.length === 10 && realResults.every(c => c);
+
+    document.getElementById("classement-waiting").classList.toggle("hidden", hasResults);
+    document.getElementById("classement-players").classList.toggle("hidden", hasResults);
+    document.getElementById("podium-box").classList.toggle("hidden", !hasResults);
+    document.getElementById("classement-table").classList.toggle("hidden", !hasResults);
+    document.getElementById("detail-cards").classList.toggle("hidden", !hasResults);
+
+    if (!hasResults) {
+      // Show who's registered and their status
+      renderPlayersStatus();
+      return;
+    }
+
+    const scores = computeScores();
+    renderPodium(scores);
+    renderTable(scores);
+    renderDetails(scores);
+  }
+
+  function renderPlayersStatus() {
+    const container = document.getElementById("classement-players");
+    container.classList.remove("hidden");
+    container.innerHTML = "";
+    const entries = Object.entries(allPlayers);
+    if (!entries.length) return;
+
+    const title = document.createElement("h3");
+    title.className = "text-sm font-semibold text-gray-400 mb-3";
+    title.textContent = `👥 ${entries.length} joueur${entries.length>1?'s':''} inscrit${entries.length>1?'s':''}`;
+    container.appendChild(title);
+
+    entries.forEach(([key, data]) => {
+      const filled = (data.predictions||[]).filter(c=>c).length;
+      const locked = !!data.locked;
+      const isMe = key === currentUser;
+      const div = document.createElement("div");
+      div.className = `flex items-center justify-between bg-white/5 rounded-xl px-4 py-2.5 slide-up ${isMe?'ring-1 ring-euro-purple/30':''}`;
+      div.innerHTML = `
+        <span class="text-sm font-medium ${isMe?'text-euro-pink':''}">${esc(data.name||key)} ${isMe?'<span class="text-[10px] text-gray-500">(toi)</span>':''}</span>
+        <div class="flex items-center gap-2">
+          <span class="text-xs text-gray-400">${filled}/10</span>
+          ${locked
+            ? '<span class="lock-badge bg-emerald-500/15 text-emerald-400">🔒 Prêt</span>'
+            : '<span class="lock-badge bg-amber-500/15 text-amber-400">✏️ En cours</span>'}
+        </div>
+      `;
+      container.appendChild(div);
+    });
+  }
+
+  function computeScores() {
+    const realMap = {};
+    realResults.forEach((c,i) => { if(c) realMap[c] = i; });
+
+    const results = Object.entries(allPlayers).map(([key, data]) => {
+      let total = 0, perfect = 0;
+      const details = [];
+      const preds = data.predictions || [];
+
+      preds.forEach((country, pi) => {
+        if (!country) return;
+        if (country in realMap) {
+          const rp = realMap[country];
+          const pts = POINTS[rp+1];
+          let bonus = 0;
+          if (pi === rp) { bonus = pts; perfect++; }
+          total += pts + bonus;
+          details.push({ country, pred:pi+1, real:rp+1, pts, bonus, perfect:pi===rp });
+        } else {
+          details.push({ country, pred:pi+1, real:null, pts:0, bonus:0, perfect:false });
         }
       });
-      titleEl.appendChild(nameInput);
 
-      const filled = predictions[currentPlayer].filter(c => c !== "").length;
-      document.getElementById("player-progress").textContent = `${filled}/10 pays sélectionnés`;
+      return { key, name: data.name||key, total, perfect, details, locked:!!data.locked };
+    });
 
-      for (let pos = 0; pos < 10; pos++) {
-        const wrapper = document.createElement("div");
-        wrapper.className = "flex items-center gap-3 slide-up";
-        wrapper.style.animationDelay = `${pos * 0.03}s`;
+    results.sort((a,b) => b.total !== a.total ? b.total-a.total : b.perfect-a.perfect);
+    return results;
+  }
 
-        // Rank badge
-        const badge = document.createElement("div");
-        const badgeColors = pos < 3
-          ? ["bg-yellow-500 text-black", "bg-gray-300 text-black", "bg-amber-700 text-white"]
-          : ["bg-white/10 text-gray-300"];
-        badge.className = `rank-badge flex-shrink-0 ${pos < 3 ? badgeColors[pos] : badgeColors[0]}`;
-        badge.textContent = RANK_LABELS[pos];
+  function renderPodium(scores) {
+    const podium = document.getElementById("podium");
+    podium.innerHTML = "";
+    if (scores.length < 2) return;
 
-        // Points label
-        const ptsLabel = document.createElement("span");
-        ptsLabel.className = "text-xs text-gray-500 w-12 flex-shrink-0 hidden sm:inline";
-        ptsLabel.textContent = RANK_POINTS_LABELS[pos];
+    const count = Math.min(scores.length, 3);
+    const order = count >= 3 ? [1,0,2] : [0,1];
+    const heights = count >= 3 ? ["h-28","h-40","h-20"] : ["h-40","h-28"];
+    const medals = count >= 3 ? ["🥈","🥇","🥉"] : ["🥇","🥈"];
 
-        // Select
-        const select = document.createElement("select");
-        select.className = "flex-1 bg-white/5 border border-white/10 rounded-lg px-3 py-2.5 text-sm text-gray-200 hover:border-euro-purple/50 transition-colors cursor-pointer";
-        select.dataset.pos = pos;
+    order.forEach((rank, di) => {
+      const p = scores[rank];
+      if (!p) return;
+      const ci = rank % P_COLORS.length;
+      const col = document.createElement("div");
+      col.className = "flex flex-col items-center w-24 sm:w-28";
+      col.innerHTML = `
+        <div class="text-center mb-1.5 slide-up">
+          <div class="text-xl">${medals[di]}</div>
+          <div class="font-bold text-xs truncate w-full ${p.key===currentUser?'text-euro-pink':''}">${esc(p.name)}</div>
+          <div class="text-[10px] text-gray-400">${p.total} pts</div>
+        </div>
+      `;
+      const bar = document.createElement("div");
+      bar.className = `${heights[di]} w-full rounded-t-xl podium-bar`;
+      bar.style.background = `linear-gradient(to top, ${P_COLORS[ci]}40, ${P_COLORS[ci]})`;
+      bar.style.animationDelay = `${di*.15}s`;
+      col.appendChild(bar);
+      podium.appendChild(col);
+    });
+  }
 
-        // Options
-        const defaultOpt = document.createElement("option");
-        defaultOpt.value = "";
-        defaultOpt.textContent = "— Choisir un pays —";
-        select.appendChild(defaultOpt);
+  function renderTable(scores) {
+    const body = document.getElementById("classement-body");
+    body.innerHTML = "";
+    scores.forEach((p, rank) => {
+      const isMe = p.key === currentUser;
+      const tr = document.createElement("tr");
+      tr.className = `border-b border-white/5 hover:bg-white/5 transition-colors slide-up ${isMe?'bg-euro-purple/5':''}`;
+      tr.style.animationDelay = `${rank*40}ms`;
+      tr.innerHTML = `
+        <td class="px-4 py-3 font-bold text-sm">${rank<3?MEDAL[rank]:rank+1}</td>
+        <td class="px-4 py-3 text-sm font-semibold ${isMe?'text-euro-pink':''}">${esc(p.name)} ${isMe?'<span class="text-[10px] text-gray-500">(toi)</span>':''}</td>
+        <td class="px-4 py-3 text-center"><span class="font-bold euro-gradient-text">${p.total}</span></td>
+        <td class="px-4 py-3 text-center text-euro-gold font-bold">${p.perfect}</td>
+      `;
+      body.appendChild(tr);
+    });
+  }
 
-        const selected = predictions[currentPlayer];
-        const usedByOthers = new Set(selected.filter((c, j) => c !== "" && j !== pos));
+  function renderDetails(scores) {
+    const container = document.getElementById("detail-cards");
+    container.innerHTML = "";
+    container.classList.remove("hidden");
 
-        COUNTRIES.forEach(country => {
-          if (usedByOthers.has(country)) return;
-          const opt = document.createElement("option");
-          opt.value = country;
-          opt.textContent = `${COUNTRY_FLAGS[country] || ""} ${country}`;
-          if (selected[pos] === country) opt.selected = true;
-          select.appendChild(opt);
-        });
+    scores.forEach((p, rank) => {
+      const card = document.createElement("div");
+      card.className = `bg-euro-card rounded-2xl p-4 card-glow slide-up ${p.key===currentUser?'ring-1 ring-euro-purple/30':''}`;
+      card.style.animationDelay = `${rank*40}ms`;
 
-        select.addEventListener("change", () => {
-          predictions[currentPlayer][pos] = select.value;
-          savePlayerPredictions(currentPlayer);
-          renderPlayerForm();
-          renderPlayerTabs();
-        });
+      const rows = p.details.map(d => {
+        const f = FLAGS[d.country]||"";
+        if (d.real === null) {
+          return `<div class="flex justify-between py-1 border-b border-white/5 opacity-35 text-xs">
+            <span>${f} ${esc(d.country)}</span><span class="text-red-400">✗</span></div>`;
+        }
+        return `<div class="flex justify-between py-1 border-b border-white/5 text-xs">
+          <span>${f} ${esc(d.country)} <span class="text-gray-500">${RANK_LABELS[d.pred-1]}→${RANK_LABELS[d.real-1]}</span></span>
+          <span class="font-bold ${d.perfect?'text-euro-gold':'text-emerald-400'}">+${d.pts+d.bonus}${d.perfect?' 🎯':''}</span></div>`;
+      }).join("");
 
-        wrapper.appendChild(badge);
-        wrapper.appendChild(ptsLabel);
-        wrapper.appendChild(select);
-        container.appendChild(wrapper);
-      }
-    }
-
-    function clearCurrentPlayer() {
-      predictions[currentPlayer] = Array(10).fill("");
-      savePlayerPredictions(currentPlayer);
-      renderPlayerForm();
-      renderPlayerTabs();
-      showToast("Pronostics réinitialisés", "info");
-    }
-
-    function saveAndNext() {
-      const filled = predictions[currentPlayer].filter(c => c !== "").length;
-      if (filled < 10) {
-        showToast(`Il manque ${10 - filled} pays !`, "error");
-        return;
-      }
-      showToast(`${escapeHtml(playerNames[currentPlayer])} sauvegardé ✓`);
-      if (currentPlayer < 6) {
-        currentPlayer++;
-        renderPlayerTabs();
-        renderPlayerForm();
-      }
-    }
-
-    // ==================== REAL RESULTS FORM ====================
-    function renderRealResultsForm() {
-      const container = document.getElementById("real-selects");
-      container.innerHTML = "";
-
-      for (let pos = 0; pos < 10; pos++) {
-        const wrapper = document.createElement("div");
-        wrapper.className = "flex items-center gap-3 slide-up";
-        wrapper.style.animationDelay = `${pos * 0.03}s`;
-
-        const badge = document.createElement("div");
-        const badgeColors = pos < 3
-          ? ["bg-yellow-500 text-black", "bg-gray-300 text-black", "bg-amber-700 text-white"]
-          : ["bg-white/10 text-gray-300"];
-        badge.className = `rank-badge flex-shrink-0 ${pos < 3 ? badgeColors[pos] : badgeColors[0]}`;
-        badge.textContent = RANK_LABELS[pos];
-
-        const ptsLabel = document.createElement("span");
-        ptsLabel.className = "text-xs text-gray-500 w-12 flex-shrink-0 hidden sm:inline";
-        ptsLabel.textContent = RANK_POINTS_LABELS[pos];
-
-        const select = document.createElement("select");
-        select.className = "flex-1 bg-white/5 border border-white/10 rounded-lg px-3 py-2.5 text-sm text-gray-200 hover:border-euro-purple/50 transition-colors cursor-pointer";
-
-        const defaultOpt = document.createElement("option");
-        defaultOpt.value = "";
-        defaultOpt.textContent = "— Choisir un pays —";
-        select.appendChild(defaultOpt);
-
-        const usedByOthers = new Set(realResults.filter((c, j) => c !== "" && j !== pos));
-
-        COUNTRIES.forEach(country => {
-          if (usedByOthers.has(country)) return;
-          const opt = document.createElement("option");
-          opt.value = country;
-          opt.textContent = `${COUNTRY_FLAGS[country] || ""} ${country}`;
-          if (realResults[pos] === country) opt.selected = true;
-          select.appendChild(opt);
-        });
-
-        select.addEventListener("change", () => {
-          realResults[pos] = select.value;
-          saveRealResultsData();
-          renderRealResultsForm();
-        });
-
-        wrapper.appendChild(badge);
-        wrapper.appendChild(ptsLabel);
-        wrapper.appendChild(select);
-        container.appendChild(wrapper);
-      }
-    }
-
-    function clearRealResults() {
-      realResults = Array(10).fill("");
-      saveRealResultsData();
-      renderRealResultsForm();
-      showToast("Résultats réinitialisés", "info");
-    }
-
-    function saveRealResults() {
-      const filled = realResults.filter(c => c !== "").length;
-      if (filled < 10) {
-        showToast(`Il manque ${10 - filled} pays !`, "error");
-        return;
-      }
-      saveRealResultsData();
-      showToast("Résultats officiels sauvegardés ✓");
-    }
-
-    // ==================== SCORE CALCULATION ====================
-    function calculateScores() {
-      // Validate real results
-      const realFilled = realResults.filter(c => c !== "").length;
-      if (realFilled < 10) {
-        showToast("Saisissez d'abord le Top 10 réel !", "error");
-        return;
-      }
-
-      // Build real results lookup: country -> position (0-indexed)
-      const realMap = {};
-      realResults.forEach((country, idx) => {
-        if (country) realMap[country] = idx;
-      });
-
-      // Calculate each player's score
-      const results = playerNames.map((name, playerIdx) => {
-        let totalScore = 0;
-        let perfectPositions = 0;
-        const details = [];
-
-        predictions[playerIdx].forEach((country, predIdx) => {
-          if (!country) return;
-
-          if (country in realMap) {
-            const realPos = realMap[country];
-            const points = POINTS_MAP[realPos + 1];
-            let bonus = 0;
-
-            if (predIdx === realPos) {
-              bonus = points;
-              perfectPositions++;
-            }
-
-            totalScore += points + bonus;
-            details.push({
-              country,
-              predictedPos: predIdx + 1,
-              realPos: realPos + 1,
-              points,
-              bonus,
-              perfect: predIdx === realPos
-            });
-          } else {
-            details.push({
-              country,
-              predictedPos: predIdx + 1,
-              realPos: null,
-              points: 0,
-              bonus: 0,
-              perfect: false
-            });
-          }
-        });
-
-        return {
-          name,
-          playerIdx,
-          totalScore,
-          perfectPositions,
-          details,
-          color: PLAYER_COLORS[playerIdx]
-        };
-      });
-
-      // Sort: by total score desc, then by perfect positions desc
-      results.sort((a, b) => {
-        if (b.totalScore !== a.totalScore) return b.totalScore - a.totalScore;
-        return b.perfectPositions - a.perfectPositions;
-      });
-
-      renderPodium(results);
-      renderScoresTable(results);
-      renderDetailCards(results);
-    }
-
-    // ==================== PODIUM ====================
-    function renderPodium(results) {
-      if (results.length < 3) return;
-      const container = document.getElementById("podium-container");
-      const podium = document.getElementById("podium");
-      container.classList.remove("hidden");
-      podium.innerHTML = "";
-
-      const podiumOrder = [1, 0, 2]; // 2nd, 1st, 3rd
-      const heights = ["h-32", "h-44", "h-24"];
-      const medals = ["🥈", "🥇", "🥉"];
-      const widths = ["w-28", "w-32", "w-28"];
-
-      podiumOrder.forEach((rank, displayIdx) => {
-        const player = results[rank];
-        if (!player) return;
-
-        const col = document.createElement("div");
-        col.className = `flex flex-col items-center ${widths[displayIdx]}`;
-
-        // Name + score
-        const info = document.createElement("div");
-        info.className = "text-center mb-2 slide-up";
-        info.innerHTML = `
-          <div class="text-2xl">${medals[displayIdx]}</div>
-          <div class="font-bold text-sm truncate w-full">${escapeHtml(player.name)}</div>
-          <div class="text-xs text-gray-400">${player.totalScore} pts</div>
-        `;
-
-        // Bar
-        const bar = document.createElement("div");
-        bar.className = `${heights[displayIdx]} w-full rounded-t-xl podium-bar`;
-        bar.style.background = `linear-gradient(to top, ${player.color.hex}40, ${player.color.hex})`;
-        bar.style.animationDelay = `${displayIdx * 0.2}s`;
-
-        col.appendChild(info);
-        col.appendChild(bar);
-        podium.appendChild(col);
-      });
-    }
-
-    // ==================== SCORES TABLE ====================
-    function renderScoresTable(results) {
-      const container = document.getElementById("scores-table-container");
-      const body = document.getElementById("scores-body");
-      container.classList.remove("hidden");
-      body.innerHTML = "";
-
-      results.forEach((player, rank) => {
-        const tr = document.createElement("tr");
-        tr.className = "score-row border-b border-white/5 hover:bg-white/5 transition-colors";
-
-        const rankIcons = ["🥇", "🥈", "🥉"];
-        const rankDisplay = rank < 3 ? rankIcons[rank] : `${rank + 1}`;
-
-        tr.innerHTML = `
-          <td class="px-4 py-4 text-lg font-bold">${rankDisplay}</td>
-          <td class="px-4 py-4">
-            <div class="flex items-center gap-2">
-              <div class="w-3 h-3 rounded-full" style="background:${player.color.hex}"></div>
-              <span class="font-semibold">${escapeHtml(player.name)}</span>
-            </div>
-          </td>
-          <td class="px-4 py-4 text-center">
-            <span class="text-xl font-bold euro-gradient-text">${player.totalScore}</span>
-            <span class="text-xs text-gray-500 ml-1">pts</span>
-          </td>
-          <td class="px-4 py-4 text-center">
-            <span class="text-lg font-bold text-euro-gold">${player.perfectPositions}</span>
-          </td>
-          <td class="px-4 py-4 hidden md:table-cell">
-            <div class="flex flex-wrap gap-1">
-              ${player.details.filter(d => d.points > 0).map(d => `
-                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs ${d.perfect ? 'bg-euro-gold/20 text-euro-gold' : 'bg-white/10 text-gray-300'}">
-                  ${COUNTRY_FLAGS[d.country] || ""} ${d.points + d.bonus}
-                </span>
-              `).join("")}
-            </div>
-          </td>
-        `;
-
-        body.appendChild(tr);
-      });
-    }
-
-    // ==================== DETAIL CARDS ====================
-    function renderDetailCards(results) {
-      const container = document.getElementById("detail-cards");
-      container.classList.remove("hidden");
-      container.innerHTML = "";
-
-      results.forEach((player, rank) => {
-        const card = document.createElement("div");
-        card.className = "bg-euro-card rounded-2xl p-5 card-glow slide-up";
-        card.style.animationDelay = `${rank * 0.05}s`;
-
-        const rankIcons = ["🥇", "🥈", "🥉"];
-        const rankDisplay = rank < 3 ? rankIcons[rank] : `#${rank + 1}`;
-
-        let detailsHtml = player.details.map(d => {
-          const flag = COUNTRY_FLAGS[d.country] || "";
-          if (d.realPos === null) {
-            return `<div class="flex items-center justify-between py-1.5 border-b border-white/5 opacity-40">
-              <span class="text-sm">${flag} ${escapeHtml(d.country)} <span class="text-xs text-gray-500">(prédit ${RANK_LABELS[d.predictedPos - 1]})</span></span>
-              <span class="text-xs text-red-400">Hors Top 10</span>
-            </div>`;
-          }
-          return `<div class="flex items-center justify-between py-1.5 border-b border-white/5">
-            <span class="text-sm">
-              ${flag} ${escapeHtml(d.country)}
-              <span class="text-xs text-gray-500">(prédit ${RANK_LABELS[d.predictedPos - 1]} → réel ${RANK_LABELS[d.realPos - 1]})</span>
-            </span>
-            <span class="text-sm font-bold ${d.perfect ? 'text-euro-gold' : 'text-emerald-400'}">
-              +${d.points + d.bonus}${d.perfect ? ' 🎯' : ''}
-            </span>
-          </div>`;
-        }).join("");
-
-        card.innerHTML = `
-          <div class="flex items-center justify-between mb-3">
-            <div class="flex items-center gap-2">
-              <span class="text-xl">${rankDisplay}</span>
-              <span class="font-bold text-lg">${escapeHtml(player.name)}</span>
-            </div>
-            <div class="text-right">
-              <div class="text-2xl font-bold euro-gradient-text">${player.totalScore}</div>
-              <div class="text-xs text-euro-gold">${player.perfectPositions} bonus 🎯</div>
-            </div>
+      card.innerHTML = `
+        <div class="flex items-center justify-between mb-2">
+          <div class="flex items-center gap-2">
+            <span class="text-base">${rank<3?MEDAL[rank]:'#'+(rank+1)}</span>
+            <span class="font-bold text-sm">${esc(p.name)}</span>
           </div>
-          <div class="mt-2">${detailsHtml}</div>
-        `;
+          <div class="text-right">
+            <div class="text-lg font-bold euro-gradient-text">${p.total}</div>
+            <div class="text-[10px] text-euro-gold">${p.perfect} 🎯</div>
+          </div>
+        </div>
+        ${rows}
+      `;
+      container.appendChild(card);
+    });
+  }
 
-        container.appendChild(card);
+  // =====================================================================
+  //  ADMIN
+  // =====================================================================
+  function renderAdmin() {
+    const list = document.getElementById("admin-list");
+    list.innerHTML = "";
+    const current = realResults.length===10 ? realResults : Array(10).fill("");
+
+    for (let i = 0; i < 10; i++) {
+      const row = document.createElement("div");
+      row.className = "flex items-center gap-2.5 slide-up";
+      row.style.animationDelay = `${i*25}ms`;
+
+      const badge = document.createElement("div");
+      const bc = i<3 ? ["bg-yellow-500 text-black","bg-gray-300 text-black","bg-amber-700 text-white"][i] : "bg-white/10 text-gray-300";
+      badge.className = `rank-badge ${bc}`;
+      badge.textContent = RANK_LABELS[i];
+
+      const pts = document.createElement("span");
+      pts.className = "text-[10px] text-gray-500 w-10 flex-shrink-0 hidden sm:block text-right";
+      pts.textContent = PTS_LABELS[i];
+
+      const sel = document.createElement("select");
+      sel.className = "flex-1 bg-white/5 border border-white/10 rounded-lg px-3 py-2.5 text-sm text-gray-200 hover:border-euro-purple/50 transition-colors cursor-pointer";
+
+      const def = document.createElement("option");
+      def.value = ""; def.textContent = "— Choisir —";
+      sel.appendChild(def);
+
+      const used = new Set(current.filter((c,j) => c && j!==i));
+      COUNTRIES.forEach(c => {
+        if (used.has(c)) return;
+        const o = document.createElement("option");
+        o.value = c; o.textContent = `${FLAGS[c]||""} ${c}`;
+        if (current[i]===c) o.selected = true;
+        sel.appendChild(o);
       });
-    }
 
-    // ==================== UTILS ====================
-    function escapeHtml(text) {
+      const idx = i;
+      sel.addEventListener("change", () => {
+        if (realResults.length < 10) realResults = Array(10).fill("");
+        realResults[idx] = sel.value;
+        renderAdmin();
+      });
+
+      row.appendChild(badge);
+      row.appendChild(pts);
+      row.appendChild(sel);
+      list.appendChild(row);
+    }
+  }
+
+  function clearAdmin() {
+    realResults = Array(10).fill("");
+    db.ref("realResults").set(realResults);
+    toast("Résultats effacés","info");
+  }
+
+  function saveAdmin() {
+    if (realResults.length<10 || realResults.some(c => !c)) {
+      toast("Remplis les 10 positions !","error"); return;
+    }
+    db.ref("realResults").set(realResults);
+    toast("Résultats publiés ! 🎉");
+    confetti();
+  }
+
+  function renderAdminPlayers() {
+    const container = document.getElementById("admin-players");
+    container.innerHTML = "";
+    const entries = Object.entries(allPlayers);
+    if (!entries.length) {
+      container.innerHTML = '<p class="text-xs text-gray-500">Aucun joueur inscrit.</p>';
+      return;
+    }
+    entries.forEach(([key, data]) => {
+      const filled = (data.predictions||[]).filter(c=>c).length;
+      const locked = !!data.locked;
       const div = document.createElement("div");
-      div.appendChild(document.createTextNode(text));
-      return div.innerHTML;
+      div.className = "flex items-center justify-between bg-white/5 rounded-xl px-4 py-2.5 slide-up";
+      div.innerHTML = `
+        <span class="text-sm font-medium">${esc(data.name||key)}</span>
+        <div class="flex items-center gap-2">
+          <span class="text-xs text-gray-400">${filled}/10</span>
+          ${locked
+            ? '<span class="lock-badge bg-emerald-500/15 text-emerald-400">🔒 Verrouillé</span>'
+            : '<span class="lock-badge bg-amber-500/15 text-amber-400">✏️ En cours</span>'}
+        </div>
+      `;
+      container.appendChild(div);
+    });
+  }
+
+  // =====================================================================
+  //  CONFETTI
+  // =====================================================================
+  function confetti() {
+    const colors = ["#e91e8c","#7b2ff7","#fbbf24","#10b981","#3b82f6","#ef4444"];
+    for (let i = 0; i < 40; i++) {
+      const p = document.createElement("div");
+      p.className = "confetti-piece";
+      p.style.left = Math.random()*100+"vw";
+      p.style.background = colors[Math.floor(Math.random()*colors.length)];
+      p.style.animationDuration = (2+Math.random()*2)+"s";
+      p.style.animationDelay = Math.random()+"s";
+      p.style.width = (6+Math.random()*8)+"px";
+      p.style.height = (6+Math.random()*8)+"px";
+      document.body.appendChild(p);
+      setTimeout(() => p.remove(), 5000);
     }
+  }
 
-    // ==================== INIT ====================
-    function init() {
-      // Load local data first (used as fallback or seed)
-      loadLocalState();
+  // =====================================================================
+  //  UTILS
+  // =====================================================================
+  function esc(t) {
+    const d = document.createElement("div");
+    d.appendChild(document.createTextNode(t));
+    return d.innerHTML;
+  }
 
-      // Check for saved Firebase config
-      let savedConfig = null;
-      try {
-        const raw = localStorage.getItem(FB_CONFIG_KEY);
-        if (raw) savedConfig = JSON.parse(raw);
-      } catch (e) { /* ignore */ }
+  function toast(msg, type="success") {
+    const c = document.getElementById("toast-container");
+    const cls = {success:"bg-emerald-600",error:"bg-red-600",info:"bg-blue-600"};
+    const t = document.createElement("div");
+    t.className = `toast ${cls[type]} text-white px-5 py-2.5 rounded-xl shadow-2xl text-sm font-medium`;
+    t.textContent = msg;
+    c.appendChild(t);
+    setTimeout(() => { t.style.opacity="0"; t.style.transition="opacity .3s"; setTimeout(()=>t.remove(),300); }, 2500);
+  }
 
-      if (savedConfig && savedConfig.apiKey && savedConfig.projectId && savedConfig.databaseURL) {
-        // Auto-reconnect with saved config
-        initFirebase(savedConfig);
-        document.getElementById("config-overlay").classList.add("hidden");
-      } else {
-        // Show config overlay
-        document.getElementById("config-overlay").classList.remove("hidden");
-      }
-
-      renderPlayerTabs();
-      renderPlayerForm();
-      showSection("pronostics");
-    }
-
-    init();
+  // =====================================================================
+  //  BOOT
+  // =====================================================================
+  boot();
   </script>
 </body>
 </html>
