@@ -5,6 +5,22 @@ Toutes les modifications notables de ce projet sont documentées dans ce fichier
 Le format est basé sur [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/),
 et ce projet adhère au [Semantic Versioning](https://semver.org/lang/fr/).
 
+## [1.2.0] — 2026-05-16
+
+### Ajouté
+
+- Déverrouillage des pronos autorisé par l'admin — les joueurs peuvent modifier leurs pronos tant que l'admin le permet
+- Bouton **🔓 Modifier mes pronos** visible pour les joueurs quand le déverrouillage est autorisé
+- Bouton admin **🔓 Autoriser / 🔒 Interdire le déverrouillage** dans l'onglet Résultats
+- Nœud Firebase `/allowUnlock` (booléen) pour contrôler l'autorisation de déverrouillage
+- Fonction `unlockPronos()` pour remettre `locked` à `false` côté joueur
+- Fonction `toggleAllowUnlock()` pour basculer l'autorisation admin
+
+### Modifié
+
+- Le verrouillage des pronos n'est plus irréversible : il peut être annulé si l'admin autorise le déverrouillage
+- Le bouton de déverrouillage n'apparaît que si `allowUnlock` est actif ET `votesLocked` est inactif
+
 ## [1.1.0] — 2026-05-16
 
 ### Ajouté
@@ -52,5 +68,6 @@ et ce projet adhère au [Semantic Versioning](https://semver.org/lang/fr/).
 - Fonction d'échappement HTML (`esc()`) pour la sécurité XSS
 - Système de toasts pour les notifications
 
+[1.2.0]: https://github.com/bianchisteph/eurovision/compare/v1.1.0...v1.2.0
 [1.1.0]: https://github.com/bianchisteph/eurovision/compare/v1.0.0...v1.1.0
 [1.0.0]: https://github.com/bianchisteph/eurovision/releases/tag/v1.0.0

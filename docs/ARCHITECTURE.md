@@ -35,6 +35,7 @@ MPP est une **Single Page Application (SPA)** entièrement contenue dans un fich
    │                 │                          │
    │                 │  /realResults[10]        │
    │                 │  /votesLocked             │
+   │                 │  /allowUnlock             │
    │                 └─────────────────────────┘
    │
    └──► Persistance locale (session)
@@ -77,7 +78,8 @@ boot()
       ├─ .info/connected → syncUI()
       ├─ players → onData() → render()
       ├─ realResults → onData() → render()
-      └─ votesLocked → onData() → render()
+      ├─ votesLocked → onData() → render()
+      └─ allowUnlock → onData() → render()
 ```
 
 ## Modèle de données Firebase
@@ -97,7 +99,7 @@ boot()
 |---|---|---|
 | `name` | `string` | Prénom affiché |
 | `predictions` | `string[10]` | Tableau de 10 noms de pays (ou `""` si non rempli) |
-| `locked` | `boolean` | `true` si les pronos sont verrouillés (irréversible) |
+| `locked` | `boolean` | `true` si les pronos sont verrouillés (réversible si l'admin autorise le déverrouillage via `allowUnlock`) |
 | `passwordHash` | `string` | Hash SHA-256 du mot de passe joueur |
 
 **Clé `uid`** : générée par `toKey(prénom)` — normalisation NFD, lowercase, caractères non-alphanumériques remplacés par `_`.
@@ -117,6 +119,14 @@ true
 ```
 
 Booléen contrôlé par l'admin. Quand `true`, aucun joueur ne peut modifier ou effacer ses pronos.
+
+### `/allowUnlock`
+
+```json
+false
+```
+
+Booléen contrôlé par l'admin. Quand `true`, les joueurs ayant verrouillé leurs pronos peuvent les déverrouiller pour les modifier (sauf si `votesLocked` est actif).
 
 ## Algorithme de scoring
 
@@ -166,6 +176,7 @@ L'application utilise 4 listeners Firebase `.on("value")` :
 2. **`players`** — Écoute tous les changements sur les joueurs → déclenche `onData()` → `render()`
 3. **`realResults`** — Écoute les changements sur les résultats officiels → déclenche `onData()` → `render()`
 4. **`votesLocked`** — Écoute le blocage global des votes → déclenche `onData()` → `render()`
+5. **`allowUnlock`** — Écoute l'autorisation de déverrouillage par l'admin → déclenche `onData()` → `render()`
 
 ### Flux de données
 
@@ -191,6 +202,7 @@ L'état de l'application est géré par des variables globales :
 | `realResults` | `string[]` | Copie locale des résultats officiels |
 | `isConnected` | `boolean` | État de la connexion Firebase |
 | `votesLocked` | `boolean` | Blocage global des votes (admin) |
+| `allowUnlock` | `boolean` | Autorisation de déverrouillage des pronos (admin) |
 | `adminAuthed` | `boolean` | Accès admin déverrouillé pour la session |
 | `currentTab` | `string` | Onglet actif (`prono`, `classement`, `admin`) |
 

@@ -14,6 +14,7 @@ description: "Use when working with Firebase Realtime Database, configuring secu
 
 /realResults: string[10]   (top 10 officiel Eurovision)
 /votesLocked: boolean      (blocage global des votes par l'admin)
+/allowUnlock: boolean      (autorisation de déverrouillage des pronos par l'admin)
 ```
 
 ## Clé joueur (uid)
@@ -26,6 +27,7 @@ Générée par `toKey(prénom)` : NFD normalize → lowercase → remplacer non-
 - `players` → met à jour `allPlayers` → `render()`
 - `realResults` → met à jour `realResults` → `render()`
 - `votesLocked` → met à jour `votesLocked` → `render()`
+- `allowUnlock` → met à jour `allowUnlock` → `render()`
 
 ## Scoring
 

@@ -4,7 +4,8 @@
 
 | Version | Supportée |
 |---|---|
-| 1.1.x | ✅ |
+| 1.2.x | ✅ |
+| 1.1.x | ❌ |
 | 1.0.x | ❌ |
 
 ## Signaler une vulnérabilité
@@ -49,6 +50,14 @@ MPP est une application **100% côté client**. Il n'y a pas de serveur backend 
       }
     },
     "realResults": {
+      ".read": true,
+      ".write": "auth !== null && root.child('admins').child(auth.uid).exists()"
+    },
+    "votesLocked": {
+      ".read": true,
+      ".write": "auth !== null && root.child('admins').child(auth.uid).exists()"
+    },
+    "allowUnlock": {
       ".read": true,
       ".write": "auth !== null && root.child('admins').child(auth.uid).exists()"
     }

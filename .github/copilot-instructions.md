@@ -37,7 +37,7 @@ Voir [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) pour les détails techniques.
 
 - Interface en **français**
 - Commits en anglais, format [Conventional Commits](https://www.conventionalcommits.org/)
-- Données Firebase : `/players/{uid}` (name, predictions[10], locked, passwordHash), `/realResults[10]`, `/votesLocked`
+- Données Firebase : `/players/{uid}` (name, predictions[10], locked, passwordHash), `/realResults[10]`, `/votesLocked`, `/allowUnlock`
 - Scoring : points de base selon position réelle + bonus x2 si position exacte
 - Authentification : mot de passe joueur hashé SHA-256 via `crypto.subtle`, mot de passe admin en constante `ADMIN_PASSWORD`
 

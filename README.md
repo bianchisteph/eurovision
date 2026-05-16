@@ -27,6 +27,7 @@
 - **Pronostics personnels** — Chaque joueur compose son Top 10 parmi les 25 pays finalistes
 - **Authentification par mot de passe** — Chaque joueur choisit un mot de passe (hashé SHA-256) à la première connexion
 - **Verrouillage des pronos** — Possibilité de verrouiller ses choix avant le début du show
+- **Déverrouillage autorisé** — L'administrateur peut autoriser les joueurs à modifier leurs pronos même après verrouillage
 - **Blocage global des votes** — L'administrateur peut fermer les votes pour tous les joueurs
 - **Synchronisation temps réel** — Tous les joueurs voient les mises à jour instantanément (Firebase Realtime Database)
 - **Classement automatique** — Calcul immédiat des scores dès la saisie des résultats officiels
@@ -105,6 +106,10 @@ La configuration Firebase est intégrée directement dans le code (`index.html`)
     "votesLocked": {
       ".read": true,
       ".write": true
+    },
+    "allowUnlock": {
+      ".read": true,
+      ".write": true
     }
   }
 }
@@ -118,15 +123,17 @@ La configuration Firebase est intégrée directement dans le code (`index.html`)
 
 1. **Connexion** — Entrer son prénom et choisir un mot de passe (ou le ressaisir si déjà inscrit)
 2. **Mes Pronos** — Sélectionner un pays pour chaque position du Top 10 (1er = 12 pts, 2e = 10 pts, etc.)
-3. **Verrouiller** — Cliquer sur "Valider mes pronos" une fois le Top 10 complet (irréversible)
-4. **Classement** — Redirigé automatiquement après verrouillage, suivre le classement en temps réel
+3. **Verrouiller** — Cliquer sur "Valider mes pronos" une fois le Top 10 complet
+4. **Modifier** — Si l'admin a autorisé le déverrouillage, un bouton "🔓 Modifier mes pronos" permet de changer ses choix
+5. **Classement** — Redirigé automatiquement après verrouillage, suivre le classement en temps réel
 
 ### Administrateur
 
 1. Cliquer sur l'onglet **⚡ Résultats** (mot de passe admin requis)
 2. **Bloquer les votes** — Empêcher tous les joueurs de modifier leurs pronos
-3. Saisir le vrai Top 10 au fur et à mesure des résultats
-4. Cliquer sur **💾 Publier les résultats** — le classement se met à jour en temps réel pour tous
+3. **Autoriser le déverrouillage** — Permettre aux joueurs de déverrouiller et modifier leurs pronos
+4. Saisir le vrai Top 10 au fur et à mesure des résultats
+5. Cliquer sur **💾 Publier les résultats** — le classement se met à jour en temps réel pour tous
 
 ## Architecture technique
 
