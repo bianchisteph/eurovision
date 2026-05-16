@@ -60,6 +60,12 @@
       position:fixed; top:-20px; z-index:300; width:10px; height:10px; border-radius:2px;
       animation:confetti 3s linear forwards; pointer-events:none;
     }
+    .prono-row { transition:transform .15s ease, opacity .15s ease; user-select:none; }
+    .prono-row.dragging { opacity:.4; transform:scale(.96); }
+    .prono-row.drag-over { transform:translateY(4px); border-top:2px solid #7b2ff7; }
+    .move-btn { width:28px;height:28px;display:inline-flex;align-items:center;justify-content:center;border-radius:8px;font-size:.75rem;cursor:pointer;transition:all .15s;flex-shrink:0;background:rgba(255,255,255,.05);color:#9ca3af;border:none; }
+    .move-btn:hover { background:rgba(123,47,247,.25);color:#c4b5fd; }
+    .move-btn:disabled { opacity:.2;cursor:default;background:transparent; }
     ::-webkit-scrollbar { width:6px; }
     ::-webkit-scrollbar-track { background:transparent; }
     ::-webkit-scrollbar-thumb { background:#7b2ff740; border-radius:3px; }
@@ -137,6 +143,7 @@
         <div id="prono-locked-banner" class="hidden mb-4 p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-sm font-medium text-center">
           ✅ Tes pronos sont verrouillés — bonne chance !
         </div>
+        <p id="prono-hint" class="text-[11px] text-gray-500 mb-3">💡 Glisse les lignes ou utilise ▲▼ pour réordonner. Choisir un pays déjà placé = échange automatique.</p>
         <div class="space-y-2.5" id="prono-list"></div>
         <div class="mt-6 flex gap-3" id="prono-actions">
           <button onclick="clearMyPronos()" id="btn-clear" class="px-4 py-2.5 rounded-xl text-sm font-medium bg-red-500/10 text-red-400 hover:bg-red-500/20 transition-all">
@@ -499,6 +506,8 @@
     return allPlayers[currentUser] || { name: displayName, predictions: Array(10).fill(""), locked: false };
   }
 
+  let dragSrcIdx = null;
+
   function renderProno() {
     const data = getMyData();
     const preds = data.predictions || Array(10).fill("");
@@ -517,14 +526,56 @@
     document.getElementById("btn-clear").classList.toggle("hidden", locked);
     const canUnlock = locked && data.locked && allowUnlock && !votesLocked;
     document.getElementById("btn-unlock").classList.toggle("hidden", !canUnlock);
+    document.getElementById("prono-hint").classList.toggle("hidden", locked);
 
     const list = document.getElementById("prono-list");
     list.innerHTML = "";
 
     for (let i = 0; i < 10; i++) {
       const row = document.createElement("div");
-      row.className = "flex items-center gap-2.5 slide-up";
+      row.className = "prono-row flex items-center gap-2 slide-up";
       row.style.animationDelay = `${i*25}ms`;
+      row.dataset.idx = i;
+
+      // Drag & drop (only when unlocked)
+      if (!locked) {
+        row.draggable = true;
+        row.addEventListener("dragstart", e => { dragSrcIdx = i; row.classList.add("dragging"); e.dataTransfer.effectAllowed = "move"; });
+        row.addEventListener("dragend", () => { row.classList.remove("dragging"); dragSrcIdx = null; list.querySelectorAll(".drag-over").forEach(r => r.classList.remove("drag-over")); });
+        row.addEventListener("dragover", e => { e.preventDefault(); e.dataTransfer.dropEffect = "move"; row.classList.add("drag-over"); });
+        row.addEventListener("dragleave", () => row.classList.remove("drag-over"));
+        row.addEventListener("drop", e => { e.preventDefault(); row.classList.remove("drag-over"); if (dragSrcIdx !== null && dragSrcIdx !== i) moveProno(dragSrcIdx, i); });
+
+        // Touch drag support
+        let touchStartY = 0;
+        let touchClone = null;
+        row.addEventListener("touchstart", e => {
+          if (e.target.tagName === "SELECT" || e.target.tagName === "BUTTON") return;
+          touchStartY = e.touches[0].clientY;
+          dragSrcIdx = i;
+          row.classList.add("dragging");
+        }, {passive:true});
+        row.addEventListener("touchmove", e => {
+          if (dragSrcIdx === null || dragSrcIdx !== i) return;
+          e.preventDefault();
+          const touch = e.touches[0];
+          const target = document.elementFromPoint(touch.clientX, touch.clientY);
+          list.querySelectorAll(".drag-over").forEach(r => r.classList.remove("drag-over"));
+          const targetRow = target?.closest?.(".prono-row");
+          if (targetRow && targetRow !== row) targetRow.classList.add("drag-over");
+        }, {passive:false});
+        row.addEventListener("touchend", e => {
+          if (dragSrcIdx === null || dragSrcIdx !== i) return;
+          row.classList.remove("dragging");
+          const overRow = list.querySelector(".drag-over");
+          if (overRow) {
+            const targetIdx = parseInt(overRow.dataset.idx);
+            overRow.classList.remove("drag-over");
+            moveProno(dragSrcIdx, targetIdx);
+          }
+          dragSrcIdx = null;
+        });
+      }
 
       const badge = document.createElement("div");
       const bc = i<3 ? ["bg-yellow-500 text-black","bg-gray-300 text-black","bg-amber-700 text-white"][i] : "bg-white/10 text-gray-300";
@@ -532,20 +583,19 @@
       badge.textContent = RANK_LABELS[i];
 
       const pts = document.createElement("span");
-      pts.className = "text-[10px] text-gray-500 w-10 flex-shrink-0 hidden sm:block text-right";
+      pts.className = "text-[10px] text-gray-500 w-8 flex-shrink-0 hidden sm:block text-right";
       pts.textContent = PTS_LABELS[i];
 
       const sel = document.createElement("select");
-      sel.className = "flex-1 bg-white/5 border border-white/10 rounded-lg px-3 py-2.5 text-sm text-gray-200 hover:border-euro-purple/50 transition-colors cursor-pointer";
+      sel.className = "flex-1 bg-white/5 border border-white/10 rounded-lg px-3 py-2.5 text-sm text-gray-200 hover:border-euro-purple/50 transition-colors cursor-pointer min-w-0";
       if (locked) { sel.disabled = true; sel.classList.add("opacity-60"); }
 
       const def = document.createElement("option");
       def.value = ""; def.textContent = "— Choisir —";
       sel.appendChild(def);
 
-      const used = new Set(preds.filter((c,j) => c && j!==i));
+      // Show ALL countries (no filtering), enable swap on conflict
       COUNTRIES.forEach(c => {
-        if (used.has(c)) return;
         const o = document.createElement("option");
         o.value = c; o.textContent = `${FLAGS[c]||""} ${c}`;
         if (preds[i] === c) o.selected = true;
@@ -555,15 +605,54 @@
       const idx = i;
       sel.addEventListener("change", () => {
         const np = [...(getMyData().predictions || Array(10).fill(""))];
-        np[idx] = sel.value;
+        const newVal = sel.value;
+        // If this country is already used elsewhere, swap
+        if (newVal) {
+          const existingIdx = np.findIndex((c, j) => c === newVal && j !== idx);
+          if (existingIdx !== -1) {
+            np[existingIdx] = np[idx] || ""; // put old value where the duplicate was
+          }
+        }
+        np[idx] = newVal;
         db.ref(`players/${currentUser}/predictions`).set(np);
       });
 
       row.appendChild(badge);
       row.appendChild(pts);
       row.appendChild(sel);
+
+      // Move up/down buttons (only when unlocked and country is assigned)
+      if (!locked) {
+        const moveBox = document.createElement("div");
+        moveBox.className = "flex flex-col gap-0.5 flex-shrink-0";
+
+        const btnUp = document.createElement("button");
+        btnUp.className = "move-btn";
+        btnUp.innerHTML = "▲";
+        btnUp.disabled = i === 0;
+        btnUp.addEventListener("click", () => moveProno(i, i - 1));
+
+        const btnDown = document.createElement("button");
+        btnDown.className = "move-btn";
+        btnDown.innerHTML = "▼";
+        btnDown.disabled = i === 9;
+        btnDown.addEventListener("click", () => moveProno(i, i + 1));
+
+        moveBox.appendChild(btnUp);
+        moveBox.appendChild(btnDown);
+        row.appendChild(moveBox);
+      }
+
       list.appendChild(row);
     }
+  }
+
+  function moveProno(fromIdx, toIdx) {
+    if (fromIdx === toIdx) return;
+    const np = [...(getMyData().predictions || Array(10).fill(""))];
+    const item = np.splice(fromIdx, 1)[0];
+    np.splice(toIdx, 0, item);
+    db.ref(`players/${currentUser}/predictions`).set(np);
   }
 
   function clearMyPronos() {
