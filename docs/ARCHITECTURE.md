@@ -18,7 +18,7 @@ MPP est une **Single Page Application (SPA)** entièrement contenue dans un fich
 │  │  localStorage          Firebase SDK (CDN)     │
 │  │  ┌──────────┐          ┌──────────────┐       │
 │  │  │ username │          │ Realtime DB  │       │
-│  │  │ pwdHash  │          │  listeners   │       │
+│  │  │          │          │  listeners   │       │
 │  │  └──────────┘          └──────┬───────┘       │
 │  │                               │               │
 └──┼───────────────────────────────┼───────────────┘
@@ -49,7 +49,7 @@ L'application possède 3 écrans principaux, gérés par la fonction `show()` qu
 
 | Écran | ID | Description |
 |---|---|---|
-| Connexion | `screen-login` | Saisie du prénom et mot de passe joueur |
+| Connexion | `screen-login` | Sélection du prénom dans la liste ou ajout d'un nouveau joueur |
 | Application | `screen-app` | Écran principal avec navigation par onglets |
 | Modal admin | `admin-modal` | Saisie du mot de passe admin (overlay) |
 
@@ -90,8 +90,7 @@ boot()
 {
   "name": "Stéphane",
   "predictions": ["France", "Suède", "Italie", "...", "..."],
-  "locked": true,
-  "passwordHash": "a1b2c3d4e5f6..."  
+  "locked": true
 }
 ```
 
@@ -100,7 +99,6 @@ boot()
 | `name` | `string` | Prénom affiché |
 | `predictions` | `string[10]` | Tableau de 10 noms de pays (ou `""` si non rempli) |
 | `locked` | `boolean` | `true` si les pronos sont verrouillés (réversible si l'admin autorise le déverrouillage via `allowUnlock`) |
-| `passwordHash` | `string` | Hash SHA-256 du mot de passe joueur |
 
 **Clé `uid`** : générée par `toKey(prénom)` — normalisation NFD, lowercase, caractères non-alphanumériques remplacés par `_`.
 

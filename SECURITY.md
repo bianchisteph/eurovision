@@ -73,8 +73,7 @@ MPP est une application **100% côté client**. Il n'y a pas de serveur backend 
 ### Stockage local
 
 - Le prénom de l'utilisateur est stocké dans le `localStorage`
-- Le hash SHA-256 du mot de passe est stocké dans le `localStorage` (jamais le mot de passe en clair)
-- Les mots de passe joueurs sont hashés côté client via `crypto.subtle.digest('SHA-256', ...)` avant envoi à Firebase
+- Pas de mot de passe joueur — l'accès se fait par sélection du prénom (mode soirée entre amis)
 - Le mot de passe admin est vérifié côté client (protection contre l'accès à l'onglet, pas contre la modification directe de la DB)
 - L'API Key Firebase est une clé publique (côté client) sécurisée par les règles Firebase
 

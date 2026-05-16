@@ -37,9 +37,9 @@ Voir [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) pour les détails techniques.
 
 - Interface en **français**
 - Commits en anglais, format [Conventional Commits](https://www.conventionalcommits.org/)
-- Données Firebase : `/players/{uid}` (name, predictions[10], locked, passwordHash), `/realResults[10]`, `/votesLocked`, `/allowUnlock`
+- Données Firebase : `/players/{uid}` (name, predictions[10], locked), `/realResults[10]`, `/votesLocked`, `/allowUnlock`
 - Scoring : points de base selon position réelle + bonus x2 si position exacte
-- Authentification : mot de passe joueur hashé SHA-256 via `crypto.subtle`, mot de passe admin en constante `ADMIN_PASSWORD`
+- Authentification : pas de mot de passe joueur (sélection du prénom dans la liste), mot de passe admin en constante `ADMIN_PASSWORD`
 - Récupération live : scraping eurovisionworld.com via proxy CORS (allorigins.win), mapping noms EN→FR (`COUNTRY_EN_TO_FR`), auto-refresh 60s optionnel
 
 ## Sécurité

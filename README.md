@@ -25,7 +25,7 @@
 ## Fonctionnalités
 
 - **Pronostics personnels** — Chaque joueur compose son Top 10 parmi les 25 pays finalistes
-- **Authentification par mot de passe** — Chaque joueur choisit un mot de passe (hashé SHA-256) à la première connexion
+- **Sélection de joueur** — Chaque joueur choisit son prénom dans la liste existante ou en ajoute un nouveau
 - **Verrouillage des pronos** — Possibilité de verrouiller ses choix avant le début du show
 - **Déverrouillage autorisé** — L'administrateur peut autoriser les joueurs à modifier leurs pronos même après verrouillage
 - **Blocage global des votes** — L'administrateur peut fermer les votes pour tous les joueurs
@@ -46,7 +46,7 @@
 **URL en ligne** : [https://bianchisteph.github.io/eurovision/](https://bianchisteph.github.io/eurovision/)
 
 1. Ouvrir le lien (ou `index.html` localement)
-2. Entrer un prénom et choisir un mot de passe
+2. Choisir son prénom dans la liste ou en ajouter un nouveau
 3. Composer son Top 10 et verrouiller
 4. Suivre le classement en temps réel
 
@@ -123,7 +123,7 @@ La configuration Firebase est intégrée directement dans le code (`index.html`)
 
 ### Joueur
 
-1. **Connexion** — Entrer son prénom et choisir un mot de passe (ou le ressaisir si déjà inscrit)
+1. **Connexion** — Choisir son prénom dans la liste ou en ajouter un nouveau
 2. **Mes Pronos** — Sélectionner un pays pour chaque position du Top 10 (1er = 12 pts, 2e = 10 pts, etc.)
 3. **Verrouiller** — Cliquer sur "Valider mes pronos" une fois le Top 10 complet
 4. **Modifier** — Si l'admin a autorisé le déverrouillage, un bouton "🔓 Modifier mes pronos" permet de changer ses choix

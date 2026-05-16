@@ -5,6 +5,28 @@ Toutes les modifications notables de ce projet sont documentées dans ce fichier
 Le format est basé sur [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/),
 et ce projet adhère au [Semantic Versioning](https://semver.org/lang/fr/).
 
+## [1.4.0] — 2026-05-16
+
+### Ajouté
+
+- **Sélecteur de joueur** — Liste déroulante des joueurs existants sur l'écran de connexion
+- Option **➕ Ajouter un nouveau prénom** pour créer un nouveau joueur
+- Fonctions `populateLoginSelect()` et `onLoginSelectChange()` pour gérer la liste dynamique
+- Indicateur 🔒 à côté des joueurs ayant verrouillé leurs pronos dans la liste
+
+### Supprimé
+
+- **Mot de passe joueur** — Plus de mot de passe requis pour se connecter
+- Champ `passwordHash` supprimé du modèle de données joueur
+- Fonction `hashPassword()` — plus utilisée
+- Constante `PWD_KEY` — plus de hash stocké dans le `localStorage`
+
+### Modifié
+
+- L'écran de connexion affiche désormais un sélecteur déroulant au lieu de champs texte prénom + mot de passe
+- La fonction `login()` ne vérifie plus de mot de passe
+- La fonction `logout()` réinitialise le sélecteur de joueur
+
 ## [1.3.0] — 2026-05-16
 
 ### Ajouté
@@ -80,6 +102,7 @@ et ce projet adhère au [Semantic Versioning](https://semver.org/lang/fr/).
 - Fonction d'échappement HTML (`esc()`) pour la sécurité XSS
 - Système de toasts pour les notifications
 
+[1.4.0]: https://github.com/bianchisteph/eurovision/compare/v1.3.0...v1.4.0
 [1.3.0]: https://github.com/bianchisteph/eurovision/compare/v1.2.0...v1.3.0
 [1.2.0]: https://github.com/bianchisteph/eurovision/compare/v1.1.0...v1.2.0
 [1.1.0]: https://github.com/bianchisteph/eurovision/compare/v1.0.0...v1.1.0
