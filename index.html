@@ -1,0 +1,958 @@
+<!DOCTYPE html>
+<html lang="fr" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>🎤 Eurovision 2026 — Jeu de Pronostics</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Firebase SDK (compat for simplicity) -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            euro: {
+              pink: '#e91e8c',
+              purple: '#7b2ff7',
+              blue: '#1e3a8a',
+              gold: '#fbbf24',
+              dark: '#0f0b1e',
+              card: '#1a1333',
+              cardHover: '#251d45',
+            }
+          },
+          fontFamily: {
+            display: ['"Segoe UI"', 'system-ui', 'sans-serif'],
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    @keyframes gradient-shift {
+      0%, 100% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+    }
+    @keyframes sparkle {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.5; transform: scale(1.2); }
+    }
+    @keyframes slideUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes podiumRise {
+      from { transform: scaleY(0); }
+      to { transform: scaleY(1); }
+    }
+    @keyframes pulse-dot {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.3; }
+    }
+    .gradient-bg {
+      background: linear-gradient(135deg, #0f0b1e 0%, #1a1040 25%, #0f0b1e 50%, #1a0a2e 75%, #0f0b1e 100%);
+      background-size: 400% 400%;
+      animation: gradient-shift 15s ease infinite;
+    }
+    .euro-gradient {
+      background: linear-gradient(135deg, #e91e8c, #7b2ff7, #1e3a8a);
+    }
+    .euro-gradient-text {
+      background: linear-gradient(135deg, #e91e8c, #7b2ff7);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .card-glow {
+      box-shadow: 0 0 20px rgba(123, 47, 247, 0.15), 0 0 40px rgba(233, 30, 140, 0.05);
+    }
+    .card-glow:hover {
+      box-shadow: 0 0 30px rgba(123, 47, 247, 0.25), 0 0 60px rgba(233, 30, 140, 0.1);
+    }
+    .sparkle { animation: sparkle 2s ease-in-out infinite; }
+    .slide-up { animation: slideUp 0.4s ease-out forwards; }
+    .tab-active {
+      background: linear-gradient(135deg, #e91e8c, #7b2ff7) !important;
+      color: white !important;
+      box-shadow: 0 4px 15px rgba(123, 47, 247, 0.4);
+    }
+    select {
+      appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%239ca3af' d='M6 8.825a.5.5 0 0 1-.354-.146l-4-4a.5.5 0 1 1 .708-.708L6 7.617l3.646-3.646a.5.5 0 1 1 .708.708l-4 4A.5.5 0 0 1 6 8.825z'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 0.75rem center;
+      background-size: 12px;
+    }
+    select:focus { outline: none; box-shadow: 0 0 0 2px #7b2ff7; }
+    .rank-badge {
+      width: 28px; height: 28px;
+      display: inline-flex; align-items: center; justify-content: center;
+      border-radius: 50%; font-weight: 700; font-size: 0.8rem;
+    }
+    .podium-bar { transform-origin: bottom; animation: podiumRise 0.6s ease-out forwards; }
+    .score-row { animation: slideUp 0.3s ease-out forwards; }
+    .score-row:nth-child(2) { animation-delay: 0.05s; }
+    .score-row:nth-child(3) { animation-delay: 0.1s; }
+    .score-row:nth-child(4) { animation-delay: 0.15s; }
+    .score-row:nth-child(5) { animation-delay: 0.2s; }
+    .score-row:nth-child(6) { animation-delay: 0.25s; }
+    .score-row:nth-child(7) { animation-delay: 0.3s; }
+    ::-webkit-scrollbar { width: 8px; }
+    ::-webkit-scrollbar-track { background: #1a1333; }
+    ::-webkit-scrollbar-thumb { background: #7b2ff7; border-radius: 4px; }
+    .toast {
+      position: fixed; bottom: 2rem; right: 2rem; z-index: 100;
+      animation: slideUp 0.3s ease-out;
+    }
+    .sync-dot {
+      width: 8px; height: 8px; border-radius: 50%; display: inline-block;
+    }
+    .sync-dot.connected { background: #10b981; animation: pulse-dot 2s infinite; }
+    .sync-dot.disconnected { background: #ef4444; }
+    .config-overlay {
+      position: fixed; inset: 0; z-index: 200;
+      background: rgba(15, 11, 30, 0.95); backdrop-filter: blur(12px);
+      display: flex; align-items: center; justify-content: center;
+    }
+  </style>
+</head>
+<body class="gradient-bg min-h-screen font-display text-gray-200">
+
+  <!-- Firebase Config Overlay (shown if not configured) -->
+  <div id="config-overlay" class="config-overlay hidden">
+    <div class="bg-euro-card rounded-2xl p-8 max-w-lg w-full mx-4 card-glow slide-up">
+      <h2 class="text-2xl font-bold euro-gradient-text mb-2">⚙️ Configuration Firebase</h2>
+      <p class="text-gray-400 text-sm mb-6">Entrez votre configuration Firebase pour activer la synchronisation en temps réel entre tous les joueurs.</p>
+      <div class="space-y-3">
+        <div>
+          <label class="text-xs text-gray-400 mb-1 block">API Key</label>
+          <input id="cfg-apiKey" type="text" placeholder="AIzaSy..." class="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-gray-200 focus:outline-none focus:border-euro-purple">
+        </div>
+        <div>
+          <label class="text-xs text-gray-400 mb-1 block">Project ID</label>
+          <input id="cfg-projectId" type="text" placeholder="mon-projet-12345" class="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-gray-200 focus:outline-none focus:border-euro-purple">
+        </div>
+        <div>
+          <label class="text-xs text-gray-400 mb-1 block">Database URL</label>
+          <input id="cfg-databaseURL" type="text" placeholder="https://mon-projet-12345-default-rtdb.europe-west1.firebasedatabase.app" class="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-gray-200 focus:outline-none focus:border-euro-purple">
+        </div>
+      </div>
+      <div class="mt-6 flex gap-3">
+        <button onclick="saveFirebaseConfig()" class="flex-1 px-6 py-2.5 rounded-xl text-sm font-semibold text-white euro-gradient hover:opacity-90 transition-all shadow-lg">
+          🚀 Connecter
+        </button>
+        <button onclick="skipFirebase()" class="px-4 py-2.5 rounded-xl text-sm font-medium bg-white/5 hover:bg-white/10 transition-all text-gray-400">
+          Mode hors-ligne →
+        </button>
+      </div>
+      <p class="text-xs text-gray-500 mt-4">💡 Voir les instructions ci-dessous pour créer un projet Firebase gratuit.</p>
+    </div>
+  </div>
+
+  <!-- Header -->
+  <header class="relative overflow-hidden py-8 text-center">
+    <div class="absolute inset-0 opacity-10">
+      <div class="absolute top-4 left-[10%] text-4xl sparkle">✨</div>
+      <div class="absolute top-8 left-[30%] text-3xl sparkle" style="animation-delay:0.5s">🎵</div>
+      <div class="absolute top-3 right-[25%] text-4xl sparkle" style="animation-delay:1s">⭐</div>
+      <div class="absolute top-10 right-[10%] text-3xl sparkle" style="animation-delay:1.5s">🎤</div>
+    </div>
+    <h1 class="text-5xl md:text-6xl font-extrabold euro-gradient-text mb-2 relative z-10">
+      Eurovision 2026
+    </h1>
+    <p class="text-lg text-gray-400 relative z-10">Jeu de Pronostics — Finale</p>
+    <div class="mt-3 flex justify-center items-center gap-2 relative z-10">
+      <div class="h-1 w-16 rounded-full bg-euro-pink"></div>
+      <div class="h-1 w-16 rounded-full bg-euro-purple"></div>
+      <div class="h-1 w-16 rounded-full bg-blue-700"></div>
+    </div>
+    <div class="mt-2 flex justify-center items-center gap-1.5 relative z-10">
+      <span id="sync-indicator" class="sync-dot disconnected"></span>
+      <span id="sync-label" class="text-xs text-gray-500">Hors-ligne</span>
+    </div>
+  </header>
+
+  <!-- Navigation Sections -->
+  <nav class="sticky top-0 z-50 bg-euro-dark/80 backdrop-blur-md border-b border-white/5">
+    <div class="max-w-6xl mx-auto flex justify-center gap-2 p-3">
+      <button onclick="showSection('pronostics')" id="nav-pronostics"
+        class="px-5 py-2.5 rounded-xl text-sm font-semibold transition-all duration-300 bg-euro-card hover:bg-euro-cardHover">
+        🎯 Pronostics
+      </button>
+      <button onclick="showSection('resultats')" id="nav-resultats"
+        class="px-5 py-2.5 rounded-xl text-sm font-semibold transition-all duration-300 bg-euro-card hover:bg-euro-cardHover">
+        🏆 Résultats Réels
+      </button>
+      <button onclick="showSection('scores')" id="nav-scores"
+        class="px-5 py-2.5 rounded-xl text-sm font-semibold transition-all duration-300 bg-euro-card hover:bg-euro-cardHover">
+        📊 Classement
+      </button>
+    </div>
+  </nav>
+
+  <main class="max-w-6xl mx-auto px-4 pb-16">
+
+    <!-- ===================== SECTION 1: PRONOSTICS ===================== -->
+    <section id="section-pronostics" class="mt-8">
+      <div class="text-center mb-6">
+        <h2 class="text-2xl font-bold mb-1">🎯 Pronostics des Joueurs</h2>
+        <p class="text-gray-400 text-sm">Chaque joueur sélectionne son Top 10 dans l'ordre</p>
+      </div>
+
+      <!-- Player Tabs -->
+      <div class="flex flex-wrap justify-center gap-2 mb-6" id="player-tabs"></div>
+
+      <!-- Player Form -->
+      <div id="player-form-container" class="bg-euro-card rounded-2xl p-6 md:p-8 card-glow transition-all duration-300">
+        <div class="flex items-center justify-between mb-6">
+          <h3 class="text-xl font-bold" id="player-form-title">Joueur 1</h3>
+          <div id="player-progress" class="text-sm text-gray-400"></div>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4" id="player-selects"></div>
+        <div class="mt-6 flex flex-wrap gap-3 items-center justify-between">
+          <button onclick="clearCurrentPlayer()" class="px-4 py-2 rounded-lg text-sm font-medium bg-red-500/10 text-red-400 hover:bg-red-500/20 transition-all">
+            🗑️ Réinitialiser ce joueur
+          </button>
+          <button onclick="saveAndNext()" class="px-6 py-2.5 rounded-xl text-sm font-semibold text-white euro-gradient hover:opacity-90 transition-all shadow-lg">
+            Sauvegarder & Suivant →
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================== SECTION 2: RÉSULTATS RÉELS ===================== -->
+    <section id="section-resultats" class="mt-8 hidden">
+      <div class="text-center mb-6">
+        <h2 class="text-2xl font-bold mb-1">🏆 Résultats Officiels</h2>
+        <p class="text-gray-400 text-sm">Saisissez le vrai Top 10 de l'Eurovision</p>
+      </div>
+      <div class="bg-euro-card rounded-2xl p-6 md:p-8 card-glow">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4" id="real-selects"></div>
+        <div class="mt-6 flex flex-wrap gap-3 items-center justify-between">
+          <button onclick="clearRealResults()" class="px-4 py-2 rounded-lg text-sm font-medium bg-red-500/10 text-red-400 hover:bg-red-500/20 transition-all">
+            🗑️ Réinitialiser
+          </button>
+          <button onclick="saveRealResults()" class="px-6 py-2.5 rounded-xl text-sm font-semibold text-white euro-gradient hover:opacity-90 transition-all shadow-lg">
+            💾 Sauvegarder les résultats
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================== SECTION 3: CLASSEMENT ===================== -->
+    <section id="section-scores" class="mt-8 hidden">
+      <div class="text-center mb-6">
+        <h2 class="text-2xl font-bold mb-1">📊 Classement Final</h2>
+        <p class="text-gray-400 text-sm">Qui a les meilleurs pronostics ?</p>
+      </div>
+
+      <div class="text-center mb-6">
+        <button onclick="calculateScores()"
+          class="px-8 py-3 rounded-xl text-base font-bold text-white euro-gradient hover:opacity-90 transition-all shadow-lg hover:shadow-xl transform hover:scale-105">
+          🚀 Calculer le classement
+        </button>
+      </div>
+
+      <!-- Podium -->
+      <div id="podium-container" class="hidden mb-8">
+        <div class="flex items-end justify-center gap-3 h-56" id="podium"></div>
+      </div>
+
+      <!-- Scores Table -->
+      <div id="scores-table-container" class="hidden">
+        <div class="bg-euro-card rounded-2xl overflow-hidden card-glow">
+          <table class="w-full">
+            <thead>
+              <tr class="border-b border-white/10">
+                <th class="px-4 py-3 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider">#</th>
+                <th class="px-4 py-3 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider">Joueur</th>
+                <th class="px-4 py-3 text-center text-xs font-semibold text-gray-400 uppercase tracking-wider">Score</th>
+                <th class="px-4 py-3 text-center text-xs font-semibold text-gray-400 uppercase tracking-wider">🎯 Bonus</th>
+                <th class="px-4 py-3 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider hidden md:table-cell">Détails</th>
+              </tr>
+            </thead>
+            <tbody id="scores-body"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Detail cards (mobile-friendly breakdown) -->
+      <div id="detail-cards" class="mt-6 grid grid-cols-1 md:grid-cols-2 gap-4 hidden"></div>
+    </section>
+  </main>
+
+  <!-- Toast container -->
+  <div id="toast-container"></div>
+
+  <script>
+    // ==================== DATA ====================
+    const COUNTRIES = [
+      "Danemark", "Allemagne", "Israël", "Belgique", "Albanie",
+      "Grèce", "Ukraine", "Australie", "Serbie", "Malte",
+      "Tchéquie", "Bulgarie", "Croatie", "Royaume-Uni", "France",
+      "Moldavie", "Finlande", "Pologne", "Lituanie", "Suède",
+      "Chypre", "Italie", "Norvège", "Roumanie", "Autriche"
+    ].sort((a, b) => a.localeCompare(b, 'fr'));
+
+    const PLAYERS = ["Joueur 1", "Joueur 2", "Joueur 3", "Joueur 4", "Joueur 5", "Joueur 6", "Joueur 7"];
+
+    const COUNTRY_FLAGS = {
+      "Albanie": "🇦🇱", "Allemagne": "🇩🇪", "Australie": "🇦🇺", "Autriche": "🇦🇹",
+      "Belgique": "🇧🇪", "Bulgarie": "🇧🇬", "Chypre": "🇨🇾", "Croatie": "🇭🇷",
+      "Danemark": "🇩🇰", "Finlande": "🇫🇮", "France": "🇫🇷", "Grèce": "🇬🇷",
+      "Israël": "🇮🇱", "Italie": "🇮🇹", "Lituanie": "🇱🇹", "Malte": "🇲🇹",
+      "Moldavie": "🇲🇩", "Norvège": "🇳🇴", "Pologne": "🇵🇱", "Roumanie": "🇷🇴",
+      "Royaume-Uni": "🇬🇧", "Serbie": "🇷🇸", "Suède": "🇸🇪", "Tchéquie": "🇨🇿",
+      "Ukraine": "🇺🇦"
+    };
+
+    const POINTS_MAP = { 1: 12, 2: 10, 3: 8, 4: 7, 5: 6, 6: 5, 7: 4, 8: 3, 9: 2, 10: 1 };
+
+    const RANK_LABELS = ["1er", "2e", "3e", "4e", "5e", "6e", "7e", "8e", "9e", "10e"];
+    const RANK_POINTS_LABELS = ["12 pts", "10 pts", "8 pts", "7 pts", "6 pts", "5 pts", "4 pts", "3 pts", "2 pts", "1 pt"];
+
+    const PLAYER_COLORS = [
+      { bg: "bg-pink-500", text: "text-pink-500", border: "border-pink-500", hex: "#ec4899" },
+      { bg: "bg-violet-500", text: "text-violet-500", border: "border-violet-500", hex: "#8b5cf6" },
+      { bg: "bg-blue-500", text: "text-blue-500", border: "border-blue-500", hex: "#3b82f6" },
+      { bg: "bg-emerald-500", text: "text-emerald-500", border: "border-emerald-500", hex: "#10b981" },
+      { bg: "bg-amber-500", text: "text-amber-500", border: "border-amber-500", hex: "#f59e0b" },
+      { bg: "bg-red-500", text: "text-red-500", border: "border-red-500", hex: "#ef4444" },
+      { bg: "bg-cyan-500", text: "text-cyan-500", border: "border-cyan-500", hex: "#06b6d4" },
+    ];
+
+    // ==================== STATE ====================
+    let currentPlayer = 0;
+    let playerNames = [...PLAYERS];
+    let predictions = Array.from({ length: 7 }, () => Array(10).fill(""));
+    let realResults = Array(10).fill("");
+
+    // ==================== FIREBASE ====================
+    let db = null;
+    let firebaseConnected = false;
+    const FB_CONFIG_KEY = "eurovision2026_firebase_config";
+    const STORAGE_KEY = "eurovision2026";
+
+    function setSyncStatus(connected) {
+      firebaseConnected = connected;
+      const dot = document.getElementById("sync-indicator");
+      const label = document.getElementById("sync-label");
+      if (connected) {
+        dot.className = "sync-dot connected";
+        label.textContent = "Synchronisé en temps réel";
+        label.className = "text-xs text-emerald-400";
+      } else {
+        dot.className = "sync-dot disconnected";
+        label.textContent = "Hors-ligne (localStorage)";
+        label.className = "text-xs text-gray-500";
+      }
+    }
+
+    function initFirebase(config) {
+      try {
+        if (firebase.apps.length) firebase.app().delete();
+      } catch (e) { /* ignore */ }
+
+      try {
+        firebase.initializeApp(config);
+        db = firebase.database();
+
+        // Listen for connection state
+        db.ref(".info/connected").on("value", (snap) => {
+          setSyncStatus(snap.val() === true);
+        });
+
+        // ---- Real-time listeners ----
+        // Player names
+        db.ref("playerNames").on("value", (snap) => {
+          const val = snap.val();
+          if (val && Array.isArray(val)) {
+            playerNames = val;
+            renderPlayerTabs();
+            renderPlayerForm();
+          }
+        });
+
+        // Predictions
+        db.ref("predictions").on("value", (snap) => {
+          const val = snap.val();
+          if (val) {
+            for (let i = 0; i < 7; i++) {
+              if (val[i] && Array.isArray(val[i])) {
+                predictions[i] = val[i];
+              }
+            }
+            renderPlayerTabs();
+            renderPlayerForm();
+          }
+        });
+
+        // Real results
+        db.ref("realResults").on("value", (snap) => {
+          const val = snap.val();
+          if (val && Array.isArray(val)) {
+            realResults = val;
+            if (!document.getElementById("section-resultats").classList.contains("hidden")) {
+              renderRealResultsForm();
+            }
+          }
+        });
+
+        showToast("Firebase connecté ✓");
+        return true;
+      } catch (e) {
+        console.error("Firebase init error:", e);
+        showToast("Erreur de connexion Firebase", "error");
+        return false;
+      }
+    }
+
+    function saveFirebaseConfig() {
+      const apiKey = document.getElementById("cfg-apiKey").value.trim();
+      const projectId = document.getElementById("cfg-projectId").value.trim();
+      const databaseURL = document.getElementById("cfg-databaseURL").value.trim();
+
+      if (!apiKey || !projectId || !databaseURL) {
+        showToast("Remplissez tous les champs", "error");
+        return;
+      }
+
+      const config = { apiKey, projectId, databaseURL };
+
+      if (initFirebase(config)) {
+        try {
+          localStorage.setItem(FB_CONFIG_KEY, JSON.stringify(config));
+        } catch (e) { /* ignore */ }
+
+        // Push current local state to Firebase as seed data
+        pushFullStateToFirebase();
+        document.getElementById("config-overlay").classList.add("hidden");
+      }
+    }
+
+    function skipFirebase() {
+      document.getElementById("config-overlay").classList.add("hidden");
+      loadLocalState();
+      renderPlayerTabs();
+      renderPlayerForm();
+      showSection("pronostics");
+    }
+
+    function pushFullStateToFirebase() {
+      if (!db) return;
+      db.ref("playerNames").set(playerNames);
+      db.ref("predictions").set(predictions);
+      db.ref("realResults").set(realResults);
+    }
+
+    // ==================== PERSISTENCE (dual: Firebase + localStorage fallback) ====================
+    function saveState() {
+      // Always save locally as backup
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify({ playerNames, predictions, realResults }));
+      } catch (e) { /* ignore */ }
+    }
+
+    function savePlayerName(idx) {
+      saveState();
+      if (db) db.ref(`playerNames/${idx}`).set(playerNames[idx]);
+    }
+
+    function savePlayerPredictions(idx) {
+      saveState();
+      if (db) db.ref(`predictions/${idx}`).set(predictions[idx]);
+    }
+
+    function saveRealResultsData() {
+      saveState();
+      if (db) db.ref("realResults").set(realResults);
+    }
+
+    function loadLocalState() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (!raw) return;
+        const state = JSON.parse(raw);
+        if (state.playerNames) playerNames = state.playerNames;
+        if (state.predictions) predictions = state.predictions;
+        if (state.realResults) realResults = state.realResults;
+      } catch (e) {
+        console.warn("Erreur chargement localStorage", e);
+      }
+    }
+
+    // ==================== TOAST ====================
+    function showToast(message, type = "success") {
+      const container = document.getElementById("toast-container");
+      const colors = {
+        success: "bg-emerald-600",
+        error: "bg-red-600",
+        info: "bg-blue-600"
+      };
+      const toast = document.createElement("div");
+      toast.className = `toast ${colors[type]} text-white px-5 py-3 rounded-xl shadow-2xl text-sm font-medium`;
+      toast.textContent = message;
+      container.appendChild(toast);
+      setTimeout(() => {
+        toast.style.opacity = "0";
+        toast.style.transition = "opacity 0.3s";
+        setTimeout(() => toast.remove(), 300);
+      }, 2500);
+    }
+
+    // ==================== SECTION NAVIGATION ====================
+    function showSection(name) {
+      ["pronostics", "resultats", "scores"].forEach(s => {
+        document.getElementById(`section-${s}`).classList.toggle("hidden", s !== name);
+        document.getElementById(`nav-${s}`).classList.toggle("tab-active", s === name);
+      });
+      if (name === "pronostics") renderPlayerForm();
+      if (name === "resultats") renderRealResultsForm();
+    }
+
+    // ==================== PLAYER TABS ====================
+    function renderPlayerTabs() {
+      const container = document.getElementById("player-tabs");
+      container.innerHTML = "";
+      playerNames.forEach((name, i) => {
+        const filled = predictions[i].filter(c => c !== "").length;
+        const btn = document.createElement("button");
+        btn.className = `relative px-4 py-2 rounded-xl text-sm font-semibold transition-all duration-300 ${
+          i === currentPlayer ? "tab-active" : "bg-euro-card hover:bg-euro-cardHover"
+        }`;
+        btn.innerHTML = `
+          <span class="truncate max-w-[100px] inline-block align-middle">${escapeHtml(name)}</span>
+          ${filled === 10
+            ? '<span class="ml-1 text-xs">✅</span>'
+            : `<span class="ml-1 text-xs opacity-60">${filled}/10</span>`
+          }
+        `;
+        btn.onclick = () => { currentPlayer = i; renderPlayerTabs(); renderPlayerForm(); };
+        container.appendChild(btn);
+      });
+    }
+
+    // ==================== PLAYER FORM ====================
+    function renderPlayerForm() {
+      const container = document.getElementById("player-selects");
+      container.innerHTML = "";
+
+      // Editable player name
+      const titleEl = document.getElementById("player-form-title");
+      titleEl.innerHTML = "";
+      const nameInput = document.createElement("input");
+      nameInput.type = "text";
+      nameInput.value = playerNames[currentPlayer];
+      nameInput.maxLength = 20;
+      nameInput.className = "bg-transparent border-b-2 border-euro-purple/50 focus:border-euro-pink text-xl font-bold outline-none w-48 transition-colors";
+      nameInput.addEventListener("change", () => {
+        const val = nameInput.value.trim();
+        if (val) {
+          playerNames[currentPlayer] = val;
+          savePlayerName(currentPlayer);
+          renderPlayerTabs();
+        }
+      });
+      titleEl.appendChild(nameInput);
+
+      const filled = predictions[currentPlayer].filter(c => c !== "").length;
+      document.getElementById("player-progress").textContent = `${filled}/10 pays sélectionnés`;
+
+      for (let pos = 0; pos < 10; pos++) {
+        const wrapper = document.createElement("div");
+        wrapper.className = "flex items-center gap-3 slide-up";
+        wrapper.style.animationDelay = `${pos * 0.03}s`;
+
+        // Rank badge
+        const badge = document.createElement("div");
+        const badgeColors = pos < 3
+          ? ["bg-yellow-500 text-black", "bg-gray-300 text-black", "bg-amber-700 text-white"]
+          : ["bg-white/10 text-gray-300"];
+        badge.className = `rank-badge flex-shrink-0 ${pos < 3 ? badgeColors[pos] : badgeColors[0]}`;
+        badge.textContent = RANK_LABELS[pos];
+
+        // Points label
+        const ptsLabel = document.createElement("span");
+        ptsLabel.className = "text-xs text-gray-500 w-12 flex-shrink-0 hidden sm:inline";
+        ptsLabel.textContent = RANK_POINTS_LABELS[pos];
+
+        // Select
+        const select = document.createElement("select");
+        select.className = "flex-1 bg-white/5 border border-white/10 rounded-lg px-3 py-2.5 text-sm text-gray-200 hover:border-euro-purple/50 transition-colors cursor-pointer";
+        select.dataset.pos = pos;
+
+        // Options
+        const defaultOpt = document.createElement("option");
+        defaultOpt.value = "";
+        defaultOpt.textContent = "— Choisir un pays —";
+        select.appendChild(defaultOpt);
+
+        const selected = predictions[currentPlayer];
+        const usedByOthers = new Set(selected.filter((c, j) => c !== "" && j !== pos));
+
+        COUNTRIES.forEach(country => {
+          if (usedByOthers.has(country)) return;
+          const opt = document.createElement("option");
+          opt.value = country;
+          opt.textContent = `${COUNTRY_FLAGS[country] || ""} ${country}`;
+          if (selected[pos] === country) opt.selected = true;
+          select.appendChild(opt);
+        });
+
+        select.addEventListener("change", () => {
+          predictions[currentPlayer][pos] = select.value;
+          savePlayerPredictions(currentPlayer);
+          renderPlayerForm();
+          renderPlayerTabs();
+        });
+
+        wrapper.appendChild(badge);
+        wrapper.appendChild(ptsLabel);
+        wrapper.appendChild(select);
+        container.appendChild(wrapper);
+      }
+    }
+
+    function clearCurrentPlayer() {
+      predictions[currentPlayer] = Array(10).fill("");
+      savePlayerPredictions(currentPlayer);
+      renderPlayerForm();
+      renderPlayerTabs();
+      showToast("Pronostics réinitialisés", "info");
+    }
+
+    function saveAndNext() {
+      const filled = predictions[currentPlayer].filter(c => c !== "").length;
+      if (filled < 10) {
+        showToast(`Il manque ${10 - filled} pays !`, "error");
+        return;
+      }
+      showToast(`${escapeHtml(playerNames[currentPlayer])} sauvegardé ✓`);
+      if (currentPlayer < 6) {
+        currentPlayer++;
+        renderPlayerTabs();
+        renderPlayerForm();
+      }
+    }
+
+    // ==================== REAL RESULTS FORM ====================
+    function renderRealResultsForm() {
+      const container = document.getElementById("real-selects");
+      container.innerHTML = "";
+
+      for (let pos = 0; pos < 10; pos++) {
+        const wrapper = document.createElement("div");
+        wrapper.className = "flex items-center gap-3 slide-up";
+        wrapper.style.animationDelay = `${pos * 0.03}s`;
+
+        const badge = document.createElement("div");
+        const badgeColors = pos < 3
+          ? ["bg-yellow-500 text-black", "bg-gray-300 text-black", "bg-amber-700 text-white"]
+          : ["bg-white/10 text-gray-300"];
+        badge.className = `rank-badge flex-shrink-0 ${pos < 3 ? badgeColors[pos] : badgeColors[0]}`;
+        badge.textContent = RANK_LABELS[pos];
+
+        const ptsLabel = document.createElement("span");
+        ptsLabel.className = "text-xs text-gray-500 w-12 flex-shrink-0 hidden sm:inline";
+        ptsLabel.textContent = RANK_POINTS_LABELS[pos];
+
+        const select = document.createElement("select");
+        select.className = "flex-1 bg-white/5 border border-white/10 rounded-lg px-3 py-2.5 text-sm text-gray-200 hover:border-euro-purple/50 transition-colors cursor-pointer";
+
+        const defaultOpt = document.createElement("option");
+        defaultOpt.value = "";
+        defaultOpt.textContent = "— Choisir un pays —";
+        select.appendChild(defaultOpt);
+
+        const usedByOthers = new Set(realResults.filter((c, j) => c !== "" && j !== pos));
+
+        COUNTRIES.forEach(country => {
+          if (usedByOthers.has(country)) return;
+          const opt = document.createElement("option");
+          opt.value = country;
+          opt.textContent = `${COUNTRY_FLAGS[country] || ""} ${country}`;
+          if (realResults[pos] === country) opt.selected = true;
+          select.appendChild(opt);
+        });
+
+        select.addEventListener("change", () => {
+          realResults[pos] = select.value;
+          saveRealResultsData();
+          renderRealResultsForm();
+        });
+
+        wrapper.appendChild(badge);
+        wrapper.appendChild(ptsLabel);
+        wrapper.appendChild(select);
+        container.appendChild(wrapper);
+      }
+    }
+
+    function clearRealResults() {
+      realResults = Array(10).fill("");
+      saveRealResultsData();
+      renderRealResultsForm();
+      showToast("Résultats réinitialisés", "info");
+    }
+
+    function saveRealResults() {
+      const filled = realResults.filter(c => c !== "").length;
+      if (filled < 10) {
+        showToast(`Il manque ${10 - filled} pays !`, "error");
+        return;
+      }
+      saveRealResultsData();
+      showToast("Résultats officiels sauvegardés ✓");
+    }
+
+    // ==================== SCORE CALCULATION ====================
+    function calculateScores() {
+      // Validate real results
+      const realFilled = realResults.filter(c => c !== "").length;
+      if (realFilled < 10) {
+        showToast("Saisissez d'abord le Top 10 réel !", "error");
+        return;
+      }
+
+      // Build real results lookup: country -> position (0-indexed)
+      const realMap = {};
+      realResults.forEach((country, idx) => {
+        if (country) realMap[country] = idx;
+      });
+
+      // Calculate each player's score
+      const results = playerNames.map((name, playerIdx) => {
+        let totalScore = 0;
+        let perfectPositions = 0;
+        const details = [];
+
+        predictions[playerIdx].forEach((country, predIdx) => {
+          if (!country) return;
+
+          if (country in realMap) {
+            const realPos = realMap[country];
+            const points = POINTS_MAP[realPos + 1];
+            let bonus = 0;
+
+            if (predIdx === realPos) {
+              bonus = points;
+              perfectPositions++;
+            }
+
+            totalScore += points + bonus;
+            details.push({
+              country,
+              predictedPos: predIdx + 1,
+              realPos: realPos + 1,
+              points,
+              bonus,
+              perfect: predIdx === realPos
+            });
+          } else {
+            details.push({
+              country,
+              predictedPos: predIdx + 1,
+              realPos: null,
+              points: 0,
+              bonus: 0,
+              perfect: false
+            });
+          }
+        });
+
+        return {
+          name,
+          playerIdx,
+          totalScore,
+          perfectPositions,
+          details,
+          color: PLAYER_COLORS[playerIdx]
+        };
+      });
+
+      // Sort: by total score desc, then by perfect positions desc
+      results.sort((a, b) => {
+        if (b.totalScore !== a.totalScore) return b.totalScore - a.totalScore;
+        return b.perfectPositions - a.perfectPositions;
+      });
+
+      renderPodium(results);
+      renderScoresTable(results);
+      renderDetailCards(results);
+    }
+
+    // ==================== PODIUM ====================
+    function renderPodium(results) {
+      if (results.length < 3) return;
+      const container = document.getElementById("podium-container");
+      const podium = document.getElementById("podium");
+      container.classList.remove("hidden");
+      podium.innerHTML = "";
+
+      const podiumOrder = [1, 0, 2]; // 2nd, 1st, 3rd
+      const heights = ["h-32", "h-44", "h-24"];
+      const medals = ["🥈", "🥇", "🥉"];
+      const widths = ["w-28", "w-32", "w-28"];
+
+      podiumOrder.forEach((rank, displayIdx) => {
+        const player = results[rank];
+        if (!player) return;
+
+        const col = document.createElement("div");
+        col.className = `flex flex-col items-center ${widths[displayIdx]}`;
+
+        // Name + score
+        const info = document.createElement("div");
+        info.className = "text-center mb-2 slide-up";
+        info.innerHTML = `
+          <div class="text-2xl">${medals[displayIdx]}</div>
+          <div class="font-bold text-sm truncate w-full">${escapeHtml(player.name)}</div>
+          <div class="text-xs text-gray-400">${player.totalScore} pts</div>
+        `;
+
+        // Bar
+        const bar = document.createElement("div");
+        bar.className = `${heights[displayIdx]} w-full rounded-t-xl podium-bar`;
+        bar.style.background = `linear-gradient(to top, ${player.color.hex}40, ${player.color.hex})`;
+        bar.style.animationDelay = `${displayIdx * 0.2}s`;
+
+        col.appendChild(info);
+        col.appendChild(bar);
+        podium.appendChild(col);
+      });
+    }
+
+    // ==================== SCORES TABLE ====================
+    function renderScoresTable(results) {
+      const container = document.getElementById("scores-table-container");
+      const body = document.getElementById("scores-body");
+      container.classList.remove("hidden");
+      body.innerHTML = "";
+
+      results.forEach((player, rank) => {
+        const tr = document.createElement("tr");
+        tr.className = "score-row border-b border-white/5 hover:bg-white/5 transition-colors";
+
+        const rankIcons = ["🥇", "🥈", "🥉"];
+        const rankDisplay = rank < 3 ? rankIcons[rank] : `${rank + 1}`;
+
+        tr.innerHTML = `
+          <td class="px-4 py-4 text-lg font-bold">${rankDisplay}</td>
+          <td class="px-4 py-4">
+            <div class="flex items-center gap-2">
+              <div class="w-3 h-3 rounded-full" style="background:${player.color.hex}"></div>
+              <span class="font-semibold">${escapeHtml(player.name)}</span>
+            </div>
+          </td>
+          <td class="px-4 py-4 text-center">
+            <span class="text-xl font-bold euro-gradient-text">${player.totalScore}</span>
+            <span class="text-xs text-gray-500 ml-1">pts</span>
+          </td>
+          <td class="px-4 py-4 text-center">
+            <span class="text-lg font-bold text-euro-gold">${player.perfectPositions}</span>
+          </td>
+          <td class="px-4 py-4 hidden md:table-cell">
+            <div class="flex flex-wrap gap-1">
+              ${player.details.filter(d => d.points > 0).map(d => `
+                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs ${d.perfect ? 'bg-euro-gold/20 text-euro-gold' : 'bg-white/10 text-gray-300'}">
+                  ${COUNTRY_FLAGS[d.country] || ""} ${d.points + d.bonus}
+                </span>
+              `).join("")}
+            </div>
+          </td>
+        `;
+
+        body.appendChild(tr);
+      });
+    }
+
+    // ==================== DETAIL CARDS ====================
+    function renderDetailCards(results) {
+      const container = document.getElementById("detail-cards");
+      container.classList.remove("hidden");
+      container.innerHTML = "";
+
+      results.forEach((player, rank) => {
+        const card = document.createElement("div");
+        card.className = "bg-euro-card rounded-2xl p-5 card-glow slide-up";
+        card.style.animationDelay = `${rank * 0.05}s`;
+
+        const rankIcons = ["🥇", "🥈", "🥉"];
+        const rankDisplay = rank < 3 ? rankIcons[rank] : `#${rank + 1}`;
+
+        let detailsHtml = player.details.map(d => {
+          const flag = COUNTRY_FLAGS[d.country] || "";
+          if (d.realPos === null) {
+            return `<div class="flex items-center justify-between py-1.5 border-b border-white/5 opacity-40">
+              <span class="text-sm">${flag} ${escapeHtml(d.country)} <span class="text-xs text-gray-500">(prédit ${RANK_LABELS[d.predictedPos - 1]})</span></span>
+              <span class="text-xs text-red-400">Hors Top 10</span>
+            </div>`;
+          }
+          return `<div class="flex items-center justify-between py-1.5 border-b border-white/5">
+            <span class="text-sm">
+              ${flag} ${escapeHtml(d.country)}
+              <span class="text-xs text-gray-500">(prédit ${RANK_LABELS[d.predictedPos - 1]} → réel ${RANK_LABELS[d.realPos - 1]})</span>
+            </span>
+            <span class="text-sm font-bold ${d.perfect ? 'text-euro-gold' : 'text-emerald-400'}">
+              +${d.points + d.bonus}${d.perfect ? ' 🎯' : ''}
+            </span>
+          </div>`;
+        }).join("");
+
+        card.innerHTML = `
+          <div class="flex items-center justify-between mb-3">
+            <div class="flex items-center gap-2">
+              <span class="text-xl">${rankDisplay}</span>
+              <span class="font-bold text-lg">${escapeHtml(player.name)}</span>
+            </div>
+            <div class="text-right">
+              <div class="text-2xl font-bold euro-gradient-text">${player.totalScore}</div>
+              <div class="text-xs text-euro-gold">${player.perfectPositions} bonus 🎯</div>
+            </div>
+          </div>
+          <div class="mt-2">${detailsHtml}</div>
+        `;
+
+        container.appendChild(card);
+      });
+    }
+
+    // ==================== UTILS ====================
+    function escapeHtml(text) {
+      const div = document.createElement("div");
+      div.appendChild(document.createTextNode(text));
+      return div.innerHTML;
+    }
+
+    // ==================== INIT ====================
+    function init() {
+      // Load local data first (used as fallback or seed)
+      loadLocalState();
+
+      // Check for saved Firebase config
+      let savedConfig = null;
+      try {
+        const raw = localStorage.getItem(FB_CONFIG_KEY);
+        if (raw) savedConfig = JSON.parse(raw);
+      } catch (e) { /* ignore */ }
+
+      if (savedConfig && savedConfig.apiKey && savedConfig.projectId && savedConfig.databaseURL) {
+        // Auto-reconnect with saved config
+        initFirebase(savedConfig);
+        document.getElementById("config-overlay").classList.add("hidden");
+      } else {
+        // Show config overlay
+        document.getElementById("config-overlay").classList.remove("hidden");
+      }
+
+      renderPlayerTabs();
+      renderPlayerForm();
+      showSection("pronostics");
+    }
+
+    init();
+  </script>
+</body>
+</html>
