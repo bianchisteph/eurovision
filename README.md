@@ -40,6 +40,7 @@
 - **Détails par joueur** — Breakdown complet des points obtenus par pays
 - **Interface responsive** — Optimisée mobile-first avec Tailwind CSS
 - **Thème Eurovision** — Interface sombre avec dégradé rose/violet fidèle à l'identité visuelle
+- **Guide & FAQ intégré** — Panneau d'aide style MPG avec tutoriel pas-à-pas, barème des points, astuces, FAQ et règles du jeu
 - **Confettis** 🎉 — Animations festives lors du verrouillage et de la publication des résultats
 - **Zéro backend custom** — Fonctionne entièrement côté client + Firebase
 
@@ -130,7 +131,8 @@ La configuration Firebase est intégrée directement dans le code (`index.html`)
 3. **Réorganiser** — Glisser-déposer les lignes, utiliser les boutons ▲▼, ou choisir un pays déjà placé pour un échange automatique
 4. **Verrouiller** — Cliquer sur "Valider mes pronos" une fois le Top 10 complet
 5. **Modifier** — Si l'admin a autorisé le déverrouillage, un bouton "🔓 Modifier mes pronos" permet de changer ses choix
-6. **Classement** — Redirigé automatiquement après verrouillage, suivre le classement en temps réel
+6. **Guide** — Cliquer sur le bouton `?` dans la barre de navigation pour consulter les règles, le barème et les astuces
+7. **Classement** — Redirigé automatiquement après verrouillage, suivre le classement en temps réel
 
 ### Administrateur
 

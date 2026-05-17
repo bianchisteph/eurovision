@@ -5,6 +5,22 @@ Toutes les modifications notables de ce projet sont documentées dans ce fichier
 Le format est basé sur [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/),
 et ce projet adhère au [Semantic Versioning](https://semver.org/lang/fr/).
 
+## [1.8.0] — 2026-05-17
+
+### Ajouté
+
+- **Guide & FAQ intégré (style MPG)** — Bouton `?` dans la barre de navigation ouvrant un panneau d'aide complet avec 5 sections en accordéon :
+  - 🎮 **Comment jouer** — Tutoriel pas-à-pas en 5 étapes numérotées
+  - 📊 **Barème des points** — Grille complète des points de base + table de bonus de proximité + exemple concret
+  - 💡 **Astuces de pro** — 5 conseils stratégiques pour maximiser son score
+  - ❓ **FAQ** — 5 questions/réponses fréquentes (verrouillage, égalités, score max, etc.)
+  - 📜 **Règles du jeu** — 7 règles officielles du jeu
+- Overlay plein écran avec backdrop blur, fermeture par clic extérieur ou bouton
+- Animations CSS pour l'accordéon (chevron rotatif, hauteur animée)
+- Verrouillage du scroll body pendant l'affichage du guide
+- Fonctions JS : `openGuide()`, `closeGuide()`, `toggleGuideSection()`
+- Classes CSS : `.guide-overlay`, `.guide-panel`, `.guide-section`, `.guide-header`, `.guide-chevron`, `.guide-body`, `.guide-step`, `.guide-step-num`, `.guide-points-grid`, `.guide-points-cell`, `.help-btn`
+
 ## [1.7.0] — 2026-05-17
 
 ### Modifié

@@ -30,7 +30,7 @@ Voir [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) pour les détails techniques.
 
 ### CSS
 - Animations dans le bloc `<style>` en haut du fichier
-- Préfixes custom : `euro-`, `card-`, `nav-`, `sync-`, `lock-`
+- Préfixes custom : `euro-`, `card-`, `nav-`, `sync-`, `lock-`, `guide-`, `help-`
 - Couleurs du thème : rose `#e91e8c`, violet `#7b2ff7`, bleu `#1e3a8a`, or `#fbbf24`, dark `#0f0b1e`
 
 ## Conventions
@@ -41,6 +41,7 @@ Voir [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) pour les détails techniques.
 - Scoring : points de base selon position réelle + bonus de proximité dégradé (×100% exact → ×0% à distance 5+)
 - Authentification : pas de mot de passe joueur (sélection du prénom dans la liste), mot de passe admin en constante `ADMIN_PASSWORD`
 - Récupération live : scraping eurovisionworld.com via proxy CORS (allorigins.win), mapping noms EN→FR (`COUNTRY_EN_TO_FR`), auto-refresh 60s optionnel
+- Guide & FAQ : panneau d'aide style MPG en overlay avec accordéon (5 sections : tutoriel, barème, astuces, FAQ, règles)
 
 ## Sécurité
 
