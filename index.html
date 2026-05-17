@@ -942,76 +942,158 @@
     "United Kingdom":"Royaume-Uni"
   };
 
+  // Fetch HTML via multiple CORS proxies (fallback chain)
+  async function fetchViaProxy(targetUrl) {
+    const proxies = [
+      (u) => "https://api.allorigins.win/raw?url=" + encodeURIComponent(u),
+      (u) => "https://api.codetabs.com/v1/proxy?quest=" + encodeURIComponent(u),
+      (u) => "https://corsproxy.org/?" + encodeURIComponent(u)
+    ];
+    for (const makeUrl of proxies) {
+      try {
+        const resp = await fetch(makeUrl(targetUrl), { signal: AbortSignal.timeout(10000) });
+        if (!resp.ok) continue;
+        const html = await resp.text();
+        // Reject Cloudflare challenge pages
+        if (html.includes("Just a moment") && html.includes("challenges.cloudflare.com")) continue;
+        return html;
+      } catch(e) { continue; }
+    }
+    return null;
+  }
+
+  // Parse results from eurovisionworld.com HTML
+  function parseEurovisionWorld(html) {
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(html, "text/html");
+    const rows = doc.querySelectorAll("table tr");
+    const results = [];
+
+    for (const row of rows) {
+      const cells = row.querySelectorAll("td");
+      if (cells.length < 3) continue;
+
+      let countryName = null;
+      let points = null;
+
+      for (const cell of cells) {
+        const text = cell.textContent.trim();
+        // Exact match on country name
+        if (!countryName && COUNTRY_EN_TO_FR[text]) {
+          countryName = text;
+        }
+        // Also check if cell contains a country name (e.g. with flag text)
+        if (!countryName) {
+          for (const en of Object.keys(COUNTRY_EN_TO_FR)) {
+            if (text === en || (text.includes(en) && text.length < en.length + 5)) {
+              countryName = en;
+              break;
+            }
+          }
+        }
+      }
+
+      if (countryName) {
+        // Look for numeric points — take the largest number > 25 to avoid running order
+        for (const cell of cells) {
+          const num = parseInt(cell.textContent.trim());
+          if (!isNaN(num) && num > 25 && num <= 600) {
+            if (points === null || num > points) points = num;
+          }
+        }
+        if (points !== null) {
+          results.push({ country: countryName, points });
+        }
+      }
+    }
+    return results;
+  }
+
+  // Parse results from Wikipedia Eurovision 2026 page
+  function parseWikipedia(html) {
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(html, "text/html");
+    const results = [];
+
+    // Wikipedia has tables with: R/O | Country | Artist | Song | Points | Place
+    // The final results table follows "Winner" caption or has Combined points
+    const tables = doc.querySelectorAll("table.wikitable");
+    for (const table of tables) {
+      const rows = table.querySelectorAll("tr");
+      for (const row of rows) {
+        const cells = row.querySelectorAll("td");
+        if (cells.length < 4) continue;
+
+        let countryName = null;
+        let points = null;
+
+        for (const cell of cells) {
+          const text = cell.textContent.trim();
+          // Check for country name
+          if (!countryName) {
+            for (const en of Object.keys(COUNTRY_EN_TO_FR)) {
+              if (text === en || text.includes(en)) {
+                countryName = en;
+                break;
+              }
+            }
+          }
+        }
+
+        if (countryName) {
+          // Find the points value — typically the 5th column (index 4) for running order tables
+          // or the 3rd column for detailed results tables
+          for (const cell of cells) {
+            const text = cell.textContent.trim();
+            const num = parseInt(text);
+            if (!isNaN(num) && num > 25 && num <= 600) {
+              if (points === null || num > points) points = num;
+            }
+          }
+          if (points !== null && !results.find(r => r.country === countryName)) {
+            results.push({ country: countryName, points });
+          }
+        }
+      }
+      // If we found at least 10 results in a single table, use them
+      if (results.length >= 10) break;
+    }
+    return results;
+  }
+
   async function fetchLiveResults() {
     const btn = document.getElementById("btn-fetch-live");
     const status = document.getElementById("fetch-status");
     btn.disabled = true;
     btn.textContent = "⏳ Récupération en cours...";
     status.classList.remove("hidden");
-    status.textContent = "Connexion à eurovisionworld.com...";
+    status.textContent = "Connexion aux sources de résultats...";
     status.className = "text-xs text-gray-500 text-center mt-1.5";
 
     try {
-      const proxyUrl = "https://api.allorigins.win/raw?url=" + encodeURIComponent("https://eurovisionworld.com/eurovision/2026");
-      const resp = await fetch(proxyUrl);
-      if (!resp.ok) throw new Error("Erreur réseau : " + resp.status);
-      const html = await resp.text();
+      let results = [];
 
-      const parser = new DOMParser();
-      const doc = parser.parseFromString(html, "text/html");
-
-      // Find the main results table — rows with voting points
-      const rows = doc.querySelectorAll("table tr, .voting_table tr");
-      const results = [];
-
-      for (const row of rows) {
-        const cells = row.querySelectorAll("td");
-        if (cells.length < 2) continue;
-
-        // Look for rows with country name and points
-        let countryName = null;
-        let points = null;
-
-        for (const cell of cells) {
-          const text = cell.textContent.trim();
-          // Check if text matches a known country
-          if (!countryName && COUNTRY_EN_TO_FR[text]) {
-            countryName = text;
-          }
-          // Check for numeric points
-          const num = parseInt(text);
-          if (!isNaN(num) && num > 0 && num <= 500) {
-            points = num;
-          }
-        }
-
-        if (countryName && points !== null) {
-          results.push({ country: countryName, points });
-        }
+      // Source 1: eurovisionworld.com via proxy
+      status.textContent = "Tentative eurovisionworld.com...";
+      const ewHtml = await fetchViaProxy("https://eurovisionworld.com/eurovision/2026");
+      if (ewHtml) {
+        results = parseEurovisionWorld(ewHtml);
       }
 
-      if (results.length === 0) {
-        // Fallback: try parsing from text pattern "Country ... NNN pts" or table order
-        const allText = html;
-        const tableMatch = allText.match(/<table[^>]*id="voting_table"[^>]*>([\s\S]*?)<\/table>/i);
-        if (tableMatch) {
-          const trs = tableMatch[1].match(/<tr[\s\S]*?<\/tr>/gi) || [];
-          for (const tr of trs) {
-            for (const [en, fr] of Object.entries(COUNTRY_EN_TO_FR)) {
-              if (tr.includes(en)) {
-                const ptsMatch = tr.match(/(\d+)\s*(?:pts?|points?)/i) || tr.match(/>(\d{2,3})</);
-                if (ptsMatch) {
-                  results.push({ country: en, points: parseInt(ptsMatch[1]) });
-                }
-                break;
-              }
-            }
+      // Source 2: Wikipedia as fallback
+      if (results.length < 10) {
+        status.textContent = "Tentative Wikipedia...";
+        const wikiHtml = await fetchViaProxy("https://en.wikipedia.org/wiki/Eurovision_Song_Contest_2026");
+        if (wikiHtml) {
+          const wikiResults = parseWikipedia(wikiHtml);
+          if (wikiResults.length > results.length) {
+            results = wikiResults;
           }
         }
       }
 
       if (results.length === 0) {
-        status.textContent = "⚠️ Aucun résultat disponible pour le moment — la finale n'a peut-être pas encore commencé.";
+        status.textContent = "⚠️ Aucun résultat disponible — les sources sont peut-être inaccessibles ou la finale n'a pas encore eu lieu.";
         status.className = "text-xs text-amber-400 text-center mt-1.5";
         btn.disabled = false;
         btn.innerHTML = "🌐 Récupérer le classement en direct";

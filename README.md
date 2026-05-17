@@ -33,7 +33,8 @@
 - **Synchronisation temps réel** — Tous les joueurs voient les mises à jour instantanément (Firebase Realtime Database)
 - **Classement automatique** — Calcul immédiat des scores dès la saisie des résultats officiels
 - **Administration protégée** — L'onglet résultats est protégé par un mot de passe admin
-- **Récupération live des résultats** — Bouton pour scraper le classement en direct depuis eurovisionworld.com
+- **Récupération live des résultats** — Bouton pour scraper le classement en direct depuis eurovisionworld.com, avec fallback automatique sur Wikipedia si la source principale est inaccessible
+- **Multi-proxy CORS** — Chaîne de 3 proxies CORS avec détection Cloudflare pour maximiser la fiabilité de la récupération
 - **Auto-refresh** — Rafraîchissement automatique des résultats toutes les 60 secondes (activable/désactivable)
 - **Podium animé** — Visualisation du podium avec animations
 - **Détails par joueur** — Breakdown complet des points obtenus par pays
@@ -136,7 +137,7 @@ La configuration Firebase est intégrée directement dans le code (`index.html`)
 1. Cliquer sur l'onglet **⚡ Résultats** (mot de passe admin requis)
 2. **Bloquer les votes** — Empêcher tous les joueurs de modifier leurs pronos
 3. **Autoriser le déverrouillage** — Permettre aux joueurs de déverrouiller et modifier leurs pronos
-4. **Récupérer le classement en direct** — Cliquer sur 🌐 pour scraper les résultats depuis eurovisionworld.com
+4. **Récupérer le classement en direct** — Cliquer sur 🌐 pour scraper les résultats depuis eurovisionworld.com (avec fallback Wikipedia automatique)
 5. **Auto-refresh** — Cliquer sur 🔄 Auto pour activer le rafraîchissement automatique (60s)
 6. Vérifier le Top 10 récupéré et ajuster si nécessaire
 7. Cliquer sur **💾 Publier les résultats** — le classement se met à jour en temps réel pour tous

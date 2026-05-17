@@ -5,6 +5,25 @@ Toutes les modifications notables de ce projet sont documentées dans ce fichier
 Le format est basé sur [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/),
 et ce projet adhère au [Semantic Versioning](https://semver.org/lang/fr/).
 
+## [1.6.0] — 2026-05-17
+
+### Corrigé
+
+- **Récupération live des résultats** — Le proxy CORS unique (allorigins.win) était bloqué par Cloudflare sur eurovisionworld.com, rendant la récupération impossible
+
+### Ajouté
+
+- **Chaîne de proxies CORS** — Essai séquentiel de 3 proxies (allorigins.win, codetabs, corsproxy.org) avec détection automatique des pages Cloudflare
+- **Fallback Wikipedia** — Si aucun proxy ne fonctionne pour eurovisionworld.com, la fonction tente automatiquement de parser la page Wikipedia `Eurovision_Song_Contest_2026`
+- Fonction `fetchViaProxy(targetUrl)` — Requête HTTP via chaîne de proxies avec timeout 10s et rejet des challenges Cloudflare
+- Fonction `parseEurovisionWorld(html)` — Parsing dédié des tables eurovisionworld.com avec matching flexible des noms de pays
+- Fonction `parseWikipedia(html)` — Parsing dédié des tables Wikipedia (`.wikitable`) pour extraire pays + points
+- Filtrage des points `> 25` pour éviter la confusion avec les numéros d'ordre de passage
+
+### Modifié
+
+- `fetchLiveResults()` refactorisée — Logique de récupération séparée en fonctions dédiées, messages de statut mis à jour pour refléter les sources multiples
+
 ## [1.5.0] — 2026-05-16
 
 ### Ajouté

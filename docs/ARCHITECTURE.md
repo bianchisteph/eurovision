@@ -257,11 +257,18 @@ L'onglet admin intègre un système de récupération automatique des résultats
 ```
 fetchLiveResults()
   │
-  ├─ Requête via proxy CORS (api.allorigins.win)
-  │   └─ GET https://eurovisionworld.com/eurovision/2026
+  ├─ Source 1 : eurovisionworld.com
+  │   ├─ fetchViaProxy() — essai séquentiel de 3 proxies CORS
+  │   │   ├─ api.allorigins.win
+  │   │   ├─ api.codetabs.com
+  │   │   └─ corsproxy.org
+  │   ├─ Détection Cloudflare ("Just a moment") → skip
+  │   └─ parseEurovisionWorld(html) → extraction pays + points
   │
-  ├─ Parsing HTML (DOMParser)
-  │   └─ Extraction des pays + points depuis les tables
+  ├─ Source 2 (fallback) : Wikipedia
+  │   ├─ fetchViaProxy() — même chaîne de proxies
+  │   │   └─ GET en.wikipedia.org/wiki/Eurovision_Song_Contest_2026
+  │   └─ parseWikipedia(html) → extraction depuis tables .wikitable
   │
   ├─ Tri par points décroissants → Top 10
   │
@@ -279,9 +286,17 @@ fetchLiveResults()
 - Arrêt automatique en quittant l'onglet admin ou à la déconnexion
 - Variable d'état : `autoFetchInterval` (ID du timer ou `null`)
 
-### Proxy CORS
+### Proxies CORS
 
-Le scraping passe par `api.allorigins.win` pour contourner les restrictions CORS du navigateur. Ce service est public et gratuit.
+Le scraping utilise une chaîne de 3 proxies CORS pour maximiser la fiabilité :
+
+| Proxy | URL |
+|---|---|
+| AllOrigins | `api.allorigins.win/raw?url=` |
+| CodeTabs | `api.codetabs.com/v1/proxy?quest=` |
+| CORSProxy.org | `corsproxy.org/?` |
+
+Chaque proxy est essayé séquentiellement avec un timeout de 10 secondes. Les réponses contenant un challenge Cloudflare ("Just a moment") sont automatiquement rejetées. Si aucun proxy ne fonctionne pour eurovisionworld.com, la fonction tente Wikipedia comme source alternative.
 
 ## Interactions de réorganisation des pronos
 
@@ -308,7 +323,7 @@ L'onglet "Mes Pronos" offre 3 modes de réorganisation du classement :
 ## Limitations connues
 
 - **Config en dur** — La configuration Firebase est intégrée dans le code source
-- **Proxy CORS** — La récupération live dépend de la disponibilité du proxy allorigins.win
+- **Proxies CORS** — La récupération live dépend de la disponibilité d'au moins un des 3 proxies CORS ou de Wikipedia
 - **Fichier unique** — Peut devenir difficile à maintenir si le projet grossit
 - **Pas de tests automatisés** — Tests manuels uniquement
 - **CDN** — Dépendance à la disponibilité des CDN externes
