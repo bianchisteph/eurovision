@@ -1009,54 +1009,73 @@
     return results;
   }
 
+  // Fetch Wikipedia Eurovision page via CORS-enabled API (no proxy needed)
+  async function fetchWikipediaHtml() {
+    try {
+      const url = "https://en.wikipedia.org/w/api.php?action=parse&page=Eurovision_Song_Contest_2026&format=json&prop=text&origin=*";
+      const resp = await fetch(url, { signal: AbortSignal.timeout(15000) });
+      if (!resp.ok) return null;
+      const json = await resp.json();
+      return json?.parse?.text?.["*"] || null;
+    } catch(e) { return null; }
+  }
+
   // Parse results from Wikipedia Eurovision 2026 page
   function parseWikipedia(html) {
     const parser = new DOMParser();
     const doc = parser.parseFromString(html, "text/html");
     const results = [];
 
-    // Wikipedia has tables with: R/O | Country | Artist | Song | Points | Place
-    // The final results table follows "Winner" caption or has Combined points
+    // Find specifically the Final results table by its caption
     const tables = doc.querySelectorAll("table.wikitable");
+    let finalTable = null;
     for (const table of tables) {
-      const rows = table.querySelectorAll("tr");
-      for (const row of rows) {
-        const cells = row.querySelectorAll("td");
-        if (cells.length < 4) continue;
+      const caption = table.querySelector("caption");
+      if (caption && caption.textContent.includes("Final of the Eurovision Song Contest")) {
+        finalTable = table;
+        break;
+      }
+    }
+    if (!finalTable) return results;
 
-        let countryName = null;
-        let points = null;
+    // Table columns: R/O (th) | Country (td) | Artist (td) | Song (td) | Points (td) | Place (td)
+    const rows = finalTable.querySelectorAll("tr");
+    for (const row of rows) {
+      const cells = row.querySelectorAll("td");
+      if (cells.length < 4) continue;
 
-        for (const cell of cells) {
-          const text = cell.textContent.trim();
-          // Check for country name
-          if (!countryName) {
-            for (const en of Object.keys(COUNTRY_EN_TO_FR)) {
-              if (text === en || text.includes(en)) {
-                countryName = en;
-                break;
-              }
-            }
-          }
-        }
+      let countryName = null;
+      let points = null;
 
-        if (countryName) {
-          // Find the points value — typically the 5th column (index 4) for running order tables
-          // or the 3rd column for detailed results tables
-          for (const cell of cells) {
-            const text = cell.textContent.trim();
-            const num = parseInt(text);
-            if (!isNaN(num) && num > 25 && num <= 600) {
-              if (points === null || num > points) points = num;
-            }
-          }
-          if (points !== null && !results.find(r => r.country === countryName)) {
-            results.push({ country: countryName, points });
+      // Country is in the first <td> — extract from <a> link text for precision
+      const countryCell = cells[0];
+      const countryLink = countryCell.querySelector("a[href*=\"in_the_Eurovision\"]");
+      if (countryLink) {
+        const linkText = countryLink.textContent.trim();
+        if (COUNTRY_EN_TO_FR[linkText]) countryName = linkText;
+      }
+      // Fallback: check cell text
+      if (!countryName) {
+        const text = countryCell.textContent.trim();
+        for (const en of Object.keys(COUNTRY_EN_TO_FR)) {
+          if (text === en || text.includes(en)) {
+            countryName = en;
+            break;
           }
         }
       }
-      // If we found at least 10 results in a single table, use them
-      if (results.length >= 10) break;
+
+      if (countryName) {
+        // Points are in the 4th <td> (index 3), Place in the 5th (index 4)
+        const pointsText = cells[3]?.textContent.trim();
+        const num = parseInt(pointsText);
+        if (!isNaN(num) && num >= 0 && num <= 600) {
+          points = num;
+        }
+        if (points !== null && !results.find(r => r.country === countryName)) {
+          results.push({ country: countryName, points });
+        }
+      }
     }
     return results;
   }
@@ -1080,10 +1099,10 @@
         results = parseEurovisionWorld(ewHtml);
       }
 
-      // Source 2: Wikipedia as fallback
+      // Source 2: Wikipedia as fallback (direct CORS API, no proxy needed)
       if (results.length < 10) {
         status.textContent = "Tentative Wikipedia...";
-        const wikiHtml = await fetchViaProxy("https://en.wikipedia.org/wiki/Eurovision_Song_Contest_2026");
+        const wikiHtml = await fetchWikipediaHtml();
         if (wikiHtml) {
           const wikiResults = parseWikipedia(wikiHtml);
           if (wikiResults.length > results.length) {
