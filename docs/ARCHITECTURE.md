@@ -136,18 +136,27 @@ Pour chaque joueur :
     Si le pays est dans realResults :
       position_réelle = index du pays dans realResults
       points_base = POINTS[position_réelle + 1]  // {1:12, 2:10, 3:8, ...}
+      distance = |position_prédite - position_réelle|
 
-      Si position_prédite == position_réelle :
-        bonus = points_base   // Position exacte → points doublés
-        perfect_count += 1
-      Sinon :
-        bonus = 0
+      // Bonus de proximité dégradé (max quand exact, zéro au-delà de 5 positions)
+      bonus = arrondi(points_base × max(0, 5 - distance) / 5)
+
+      Si distance == 0 :
+        perfect_count += 1  // 🎯 Position exacte
 
       score_total += points_base + bonus
     Sinon :
       // Pays non classé dans le Top 10 réel → 0 point
 
 Classement : tri par score_total DESC, puis perfect_count DESC
+```
+
+### Table des bonus de proximité
+
+```
+Distance :    0     1     2     3     4    5+
+Bonus    :  100%   80%   60%   40%   20%   0%
+Indicateur: 🎯    🔥    🔥    🔥    🔥    —
 ```
 
 ### Table des points

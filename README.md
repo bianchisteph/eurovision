@@ -188,15 +188,27 @@ eurovision/
 Pour chaque pays dans le pronostic d'un joueur :
 
 1. **Points de base** — Si le pays figure dans le vrai Top 10, le joueur gagne les points correspondant à la **position réelle** du pays
-2. **Bonus position exacte** — Si le joueur a placé le pays à la bonne position, les points sont **doublés** (🎯)
+2. **Bonus de proximité** — Plus la position prédite est proche de la position réelle, plus le bonus est élevé. Formule : `bonus = arrondi(points_base × max(0, 5 - distance) / 5)`
 3. **Score total** = somme de tous les points de base + bonus
+
+### Bonus de proximité
+
+| Distance | Bonus | Indicateur |
+|:---:|:---:|:---:|
+| 0 (exact) | 100% des points de base | 🎯 |
+| 1 | 80% | 🔥 |
+| 2 | 60% | 🔥 |
+| 3 | 40% | 🔥 |
+| 4 | 20% | 🔥 |
+| 5+ | 0% | — |
 
 ### Exemple
 
 | Prono joueur | Résultat réel | Points |
 |---|---|---|
-| 🇫🇷 France → 1er | 🇫🇷 France → 1er | 12 + 12 (bonus) = **24** 🎯 |
-| 🇸🇪 Suède → 2e | 🇸🇪 Suède → 5e | 6 (position réelle 5e) |
+| 🇫🇷 France → 1er | 🇫🇷 France → 1er | 12 + 12 (bonus 100%) = **24** 🎯 |
+| 🇸🇪 Suède → 2e | 🇸🇪 Suède → 5e | 6 + 2 (bonus 40%) = **8** 🔥 |
+| 🇧🇬 Bulgarie → 8e | 🇧🇬 Bulgarie → 1er | 12 + 0 (distance 7) = **12** |
 | 🇮🇹 Italie → 3e | 🇮🇹 Italie non classée | **0** |
 
 ## Pays participants

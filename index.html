@@ -746,10 +746,11 @@
         if (country in realMap) {
           const rp = realMap[country];
           const pts = POINTS[rp+1];
-          let bonus = 0;
-          if (pi === rp) { bonus = pts; perfect++; }
+          const distance = Math.abs(pi - rp);
+          const bonus = Math.round(pts * Math.max(0, 5 - distance) / 5);
+          if (distance === 0) perfect++;
           total += pts + bonus;
-          details.push({ country, pred:pi+1, real:rp+1, pts, bonus, perfect:pi===rp });
+          details.push({ country, pred:pi+1, real:rp+1, pts, bonus, perfect:distance===0 });
         } else {
           details.push({ country, pred:pi+1, real:null, pts:0, bonus:0, perfect:false });
         }
@@ -828,9 +829,11 @@
           return `<div class="flex justify-between py-1 border-b border-white/5 opacity-35 text-xs">
             <span>${f} ${esc(d.country)}</span><span class="text-red-400">✗</span></div>`;
         }
+        const indicator = d.perfect ? ' 🎯' : d.bonus > 0 ? ' 🔥' : '';
+        const color = d.perfect ? 'text-euro-gold' : d.bonus > 0 ? 'text-amber-400' : 'text-emerald-400';
         return `<div class="flex justify-between py-1 border-b border-white/5 text-xs">
           <span>${f} ${esc(d.country)} <span class="text-gray-500">${RANK_LABELS[d.pred-1]}→${RANK_LABELS[d.real-1]}</span></span>
-          <span class="font-bold ${d.perfect?'text-euro-gold':'text-emerald-400'}">+${d.pts+d.bonus}${d.perfect?' 🎯':''}</span></div>`;
+          <span class="font-bold ${color}">+${d.pts+d.bonus}${indicator}</span></div>`;
       }).join("");
 
       card.innerHTML = `

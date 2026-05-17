@@ -5,6 +5,21 @@ Toutes les modifications notables de ce projet sont documentées dans ce fichier
 Le format est basé sur [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/),
 et ce projet adhère au [Semantic Versioning](https://semver.org/lang/fr/).
 
+## [1.7.0] — 2026-05-17
+
+### Modifié
+
+- **Scoring : bonus de proximité dégradé** — Le bonus tout-ou-rien (position exacte = points doublés, sinon 0) est remplacé par un bonus progressif selon la distance entre position prédite et position réelle
+  - Distance 0 (exact) : bonus 100% 🎯
+  - Distance 1 : bonus 80% 🔥
+  - Distance 2 : bonus 60% 🔥
+  - Distance 3 : bonus 40% 🔥
+  - Distance 4 : bonus 20% 🔥
+  - Distance 5+ : bonus 0%
+- Formule : `bonus = arrondi(points_base × max(0, 5 - distance) / 5)`
+- Score maximum théorique inchangé : 116 points (10 positions exactes)
+- Indicateurs visuels : 🎯 (exact, or), 🔥 (proximité, ambre), vert (base seule)
+
 ## [1.6.0] — 2026-05-17
 
 ### Corrigé
