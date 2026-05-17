@@ -1,8 +1,8 @@
-# Architecture technique — MPP
+# Architecture technique — BAOBAPRONO
 
 ## Vue d'ensemble
 
-MPP est une **Single Page Application (SPA)** entièrement contenue dans un fichier `index.html`. Elle ne nécessite aucun build, bundler, ni serveur backend. La persistance et la synchronisation temps réel sont assurées par Firebase Realtime Database.
+Baobaprono est une **Single Page Application (SPA)** entièrement contenue dans un fichier `index.html`. Elle ne nécessite aucun build, bundler, ni serveur backend. La persistance et la synchronisation temps réel sont assurées par Firebase Realtime Database.
 
 ```
 ┌─────────────────────────────────────────────────┐

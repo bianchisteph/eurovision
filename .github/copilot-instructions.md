@@ -1,4 +1,4 @@
-# Project Guidelines — MPP (Mon Petit Prono)
+# Project Guidelines — BAOBAPRONO
 
 ## Overview
 
@@ -48,6 +48,17 @@ Voir [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) pour les détails techniques.
 - Toujours utiliser `esc()` pour les entrées utilisateur
 - Ne jamais stocker de secrets côté client
 - L'API Key Firebase est publique par design, la sécurité repose sur les règles Firebase
+
+## Commit & Push
+
+Quand l'utilisateur demande de **commit and push** (ou "commit et push", "commit + push") :
+
+1. **`CHANGELOG.md`** — toujours mis à jour (nouvelle entrée avec date, type et description)
+2. **`README.md`** — mis à jour uniquement si une feature visible par l'utilisateur final a changé
+3. **`docs/ARCHITECTURE.md`** — mis à jour uniquement si l'architecture technique, le scoring, la structure de données ou les composants UI ont changé
+4. **`copilot-instructions.md`** — mis à jour uniquement si les conventions, le code style ou les règles du projet ont changé
+
+Ne pas toucher aux docs qui ne sont pas impactées par les changements.
 
 ## Documentation
 

@@ -1,4 +1,4 @@
-# Contribuer à MPP — Mon Petit Prono
+# Contribuer à BAOBAPRONO
 
 Merci de vouloir contribuer à ce projet ! 🎤
 

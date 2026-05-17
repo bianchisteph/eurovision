@@ -5,6 +5,13 @@ Toutes les modifications notables de ce projet sont documentées dans ce fichier
 Le format est basé sur [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/),
 et ce projet adhère au [Semantic Versioning](https://semver.org/lang/fr/).
 
+## [1.9.0] — 2026-05-17
+
+### Changé
+
+- **Rebranding : MPP → BAOBAPRONO** — Nouveau nom de projet dans toute l'application (titre, header, login, guide) et la documentation (README, CONTRIBUTING, ARCHITECTURE, LICENSE, SECURITY, copilot-instructions)
+- Clé localStorage renommée `baobaprono_username` (anciennement `mpp_username`)
+
 ## [1.8.0] — 2026-05-17
 
 ### Ajouté

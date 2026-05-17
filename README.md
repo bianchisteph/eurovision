@@ -1,4 +1,4 @@
-# 🎤 MPP — Mon Petit Prono | Eurovision 2026
+# 🎤 BAOBAPRONO | Eurovision 2026
 
 > Application web de pronostics entre amis pour la finale de l'Eurovision 2026.
 
@@ -20,7 +20,7 @@
 
 ## Aperçu
 
-**MPP (Mon Petit Prono)** est une application single-page permettant à un groupe d'amis de pronostiquer le Top 10 de la finale de l'Eurovision 2026. Les pronostics sont synchronisés en temps réel via Firebase Realtime Database, et un classement automatique est calculé dès que les résultats officiels sont saisis.
+**BAOBAPRONO** est une application single-page permettant à un groupe d'amis de pronostiquer le Top 10 de la finale de l'Eurovision 2026. Les pronostics sont synchronisés en temps réel via Firebase Realtime Database, et un classement automatique est calculé dès que les résultats officiels sont saisis.
 
 ## Fonctionnalités
 

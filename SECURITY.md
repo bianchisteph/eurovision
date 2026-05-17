@@ -10,7 +10,7 @@
 
 ## Signaler une vulnérabilité
 
-Si vous découvrez une vulnérabilité de sécurité dans MPP, merci de la signaler de manière responsable.
+Si vous découvrez une vulnérabilité de sécurité dans BAOBAPRONO, merci de la signaler de manière responsable.
 
 ### Procédure
 
@@ -32,7 +32,7 @@ Si vous découvrez une vulnérabilité de sécurité dans MPP, merci de la signa
 
 ### Architecture
 
-MPP est une application **100% côté client**. Il n'y a pas de serveur backend custom. Les considérations de sécurité portent principalement sur :
+BAOBAPRONO est une application **100% côté client**. Il n'y a pas de serveur backend custom. Les considérations de sécurité portent principalement sur :
 
 ### Firebase Realtime Database
 

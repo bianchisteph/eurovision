@@ -1,7 +1,7 @@
 ---
 description: "Use when working with Firebase Realtime Database, configuring security rules, modifying data structure, or debugging sync issues. Covers the Firebase data model and real-time listeners."
 ---
-# Firebase — Conventions MPP
+# Firebase — Conventions BAOBAPRONO
 
 ## Structure de données
 
